@@ -217,3 +217,105 @@ Lemma typing_wf :
 Proof.
   intros Σ Γ t T H. induction H ; easy.
 Defined.
+
+(* We devise a restriction of ETT such that we don't need funext to translate
+   it. *)
+Inductive nice_typing Σ : forall Γ t A, Σ ;;; Γ |-x t : A -> Type :=
+| nice_Rel Γ n hw isdecl :
+    nice_wf _ _ hw ->
+    nice_typing _ _ _ _ (type_Rel Σ Γ n hw isdecl)
+
+| nice_Sort Γ s hw :
+    nice_wf _ _ hw ->
+    nice_typing _ _ _ _ (type_Sort Σ Γ s hw)
+
+| nice_Prod Γ n A B s1 s2 hA hB :
+    nice_typing _ _ _ _ hA ->
+    nice_typing _ _ _ _ hB ->
+    nice_typing _ _ _ _ (type_Prod Σ Γ n A B s1 s2 hA hB)
+
+| nice_Lambda Γ n n' A t s1 s2 B hA hB ht :
+    nice_typing _ _ _ _ hA ->
+    nice_typing _ _ _ _ hB ->
+    nice_typing _ _ _ _ ht ->
+    nice_typing _ _ _ _ (type_Lambda Σ Γ n n' A t s1 s2 B hA hB ht)
+
+| nice_App Γ n s1 s2 t A B u hA hB ht hu :
+    nice_typing _ _ _ _ hA ->
+    nice_typing _ _ _ _ hB ->
+    nice_typing _ _ _ _ ht ->
+    nice_typing _ _ _ _ hu ->
+    nice_typing _ _ _ _ (type_App Σ Γ n s1 s2 t A B u hA hB ht hu)
+
+| nice_Sum Γ n A B s1 s2 hA hB :
+    nice_typing _ _ _ _ hA ->
+    nice_typing _ _ _ _ hB ->
+    nice_typing _ _ _ _ (type_Sum Σ Γ n A B s1 s2 hA hB)
+
+| nice_Pair Γ n A B u v s1 s2 hA hB hu hv :
+    nice_typing _ _ _ _ hA ->
+    nice_typing _ _ _ _ hB ->
+    nice_typing _ _ _ _ hu ->
+    nice_typing _ _ _ _ hv ->
+    nice_typing _ _ _ _ (type_Pair Σ Γ n A B u v s1 s2 hA hB hu hv)
+
+| nice_Pi1 Γ n A B s1 s2 p hp hA hB :
+    nice_typing _ _ _ _ hp ->
+    nice_typing _ _ _ _ hA ->
+    nice_typing _ _ _ _ hB ->
+    nice_typing _ _ _ _ (type_Pi1 Σ Γ n A B s1 s2 p hp hA hB)
+
+| nice_Pi2 Γ n A B s1 s2 p hp hA hB :
+    nice_typing _ _ _ _ hp ->
+    nice_typing _ _ _ _ hA ->
+    nice_typing _ _ _ _ hB ->
+    nice_typing _ _ _ _ (type_Pi2 Σ Γ n A B s1 s2 p hp hA hB)
+
+| nice_Eq Γ s A u v hA hu hv :
+    nice_typing _ _ _ _ hA ->
+    nice_typing _ _ _ _ hu ->
+    nice_typing _ _ _ _ hv ->
+    nice_typing _ _ _ _ (type_Eq Σ Γ s A u v hA hu hv)
+
+| nice_Refl Γ s A u hA hu :
+    nice_typing _ _ _ _ hA ->
+    nice_typing _ _ _ _ hu ->
+    nice_typing _ _ _ _ (type_Refl Σ Γ s A u hA hu)
+
+| nice_Ax Γ id ty hw lk :
+    nice_wf _ _ hw ->
+    nice_typing _ _ _ _ (type_Ax Σ Γ id ty hw lk)
+
+| nice_conv Γ t A B s ht hB hconv :
+    nice_typing _ _ _ _ ht ->
+    nice_typing _ _ _ _ hB ->
+    nice_eq_term _ _ _ _ _ hconv ->
+    nice_typing _ _ _ _ (type_conv Σ Γ t A B s ht hB hconv)
+
+with nice_eq_term Σ : forall Γ t u A, Σ ;;; Γ |-x t = u : A -> Type :=
+| nice_reflexivity Γ u A hu :
+    nice_typing _ _ _ _ hu ->
+    nice_eq_term _ _ _ _ _ (eq_reflexivity Σ Γ u A hu)
+
+| nice_symmetry Γ u v A h :
+    nice_eq_term _ _ _ _ _ h ->
+    nice_eq_term _ _ _ _ _ (eq_symmetry Σ Γ u v A h)
+
+| nice_transitivity Γ u v w A h1 h2 :
+    nice_eq_term _ _ _ _ _ h1 ->
+    nice_eq_term _ _ _ _ _ h2 ->
+    nice_eq_term _ _ _ _ _ (eq_transitivity Σ Γ u v w A h1 h2)
+
+(* Is this really the right way? *)
+
+with nice_wf Σ : forall Γ, wf Σ Γ -> Type :=
+| nice_nil : nice_wf _ _ (wf_nil Σ)
+| nice_snoc Γ A s hw hA :
+    nice_wf _ _ hw ->
+    nice_typing _ _ _ _ hA ->
+    nice_wf _ _ (wf_snoc Σ Γ A s hw hA)
+.
+
+Arguments nice_typing {_ _ _ _} _.
+Arguments nice_eq_term {_ _ _ _ _} _.
+Arguments nice_wf {_ _} _.
