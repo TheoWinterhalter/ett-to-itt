@@ -4,7 +4,8 @@
 From Coq Require Import Bool String List BinPos Compare_dec Omega.
 From Equations Require Import Equations DepElimDec.
 From Template Require Import Ast utils Typing.
-From Translation Require Import util SAst SLiftSubst SCommon XTyping.
+From Translation Require Import util SAst SLiftSubst SCommon ITyping XTyping 
+     FundamentalLemma Translation.
 
 (* We devise a restriction of ETT such that we don't need funext to translate
    it. *)
@@ -200,3 +201,39 @@ with nice_wf Σ : forall Γ, wf Σ Γ -> Type :=
 Arguments nice_typing {_ _ _ _} _.
 Arguments nice_eq_term {_ _ _ _ _} _ _.
 Arguments nice_wf {_ _} _.
+
+Derive Signature for nice_typing.
+Derive Signature for nice_eq_term.
+Derive Signature for nice_wf.
+
+(* We're now arguing that whenever the derivation is nice without reflection,
+   a conversion is translated to HeqRefl.
+ *)
+
+Inductive isHeqRefl : sterm -> Type :=
+| is_HeqRefl A u : isHeqRefl (sHeqRefl A u).
+
+(* TODO Move in Translation? *)
+Definition eq_translation {Σ} hg {Γ u v A} h {Γ'} hΓ :=
+  pi2_ (@complete_translation Σ hg) Γ u v A h Γ' hΓ.
+
+Definition equality_term {Σ Γ A u v Γ'}
+  (e : ∑ A' A'' u' v' p', eqtrans Σ Γ A u v Γ' A' A'' u' v' p') : sterm.
+Proof.
+  destruct e as (A' & A'' & u' & v' & p' & h).
+  exact p'.
+Defined.
+
+Lemma nice_HeqRefl :
+  forall {Σ} (hg : type_glob Σ) 
+    {Γ u v A} (h : Σ ;;; Γ |-x u = v : A)
+    {Γ'} (hΓ : Σ |--i Γ' # ⟦ Γ ⟧),
+    nice_eq_term h noReflection ->
+    let p := equality_term (eq_translation hg h hΓ) in
+    isHeqRefl p.
+Proof.
+  intros Σ hg Γ u v A h Γ' hΓ hn p.
+  dependent induction hn.
+  -
+Abort.
+

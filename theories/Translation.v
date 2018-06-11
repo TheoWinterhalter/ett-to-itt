@@ -440,10 +440,10 @@ Defined.
 Definition complete_translation {Σ} :
   type_glob Σ ->
   (forall Γ (h : XTyping.wf Σ Γ), ∑ Γ', Σ |--i Γ' # ⟦ Γ ⟧ ) *
-  (forall { Γ t A} (h : Σ ;;; Γ |-x t : A)
+  (forall {Γ t A} (h : Σ ;;; Γ |-x t : A)
      {Γ'} (hΓ : Σ |--i Γ' # ⟦ Γ ⟧),
       ∑ A' t', Σ ;;;; Γ' |--- [t'] : A' # ⟦ Γ |--- [t] : A ⟧) *
-  (forall { Γ u v A} (h : Σ ;;; Γ |-x u = v : A)
+  (forall {Γ u v A} (h : Σ ;;; Γ |-x u = v : A)
      {Γ'} (hΓ : Σ |--i Γ' # ⟦ Γ ⟧),
       ∑ A' A'' u' v' p',
         eqtrans Σ Γ A u v Γ' A' A'' u' v' p').
