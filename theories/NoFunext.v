@@ -224,11 +224,6 @@ Proof.
   exact p'.
 Defined.
 
-Arguments Build_pp_sigT {_ _} _ _.
-
-Notation "( x ; .. ; y ; z )" :=
-  (Build_pp_sigT x (.. (Build_pp_sigT y z) ..)) : type_scope.
-
 Lemma nice_HeqRefl :
   forall {Σ} (hg : type_glob Σ)
     {Γ u v A} (h : Σ ;;; Γ |-x u = v : A)

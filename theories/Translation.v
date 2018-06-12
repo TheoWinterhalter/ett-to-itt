@@ -885,11 +885,11 @@ Proof.
         - eapply trel_sym. eapply inrel_trel. eassumption.
         - apply inrel_trel. assumption.
       }
-      destruct hv1 as [_ hv1].
-      destruct hv2 as [_ hv2].
       destruct (trel_to_heq Γ' hg sim) as [p3 hp3].
       (* We can conclude *)
       exists A1, A4, u1, w1.
+      destruct hv1 as [_ hv1].
+      destruct hv2 as [_ hv2].
       exists (sHeqTrans p1 (sHeqTrans p3 p2)).
       repeat split ; try assumption.
       specialize (hp3 _ _ hv1 hv2).
