@@ -210,9 +210,6 @@ Derive Signature for nice_wf.
    a conversion is translated to HeqRefl.
  *)
 
-Inductive isHeqRefl : sterm -> Type :=
-| is_HeqRefl A u : isHeqRefl (sHeqRefl A u).
-
 (* TODO Move in Translation? *)
 Definition type_translation {Σ} hg {Γ t A} h {Γ'} hΓ :=
   pi2_ (pi1_ (@complete_translation Σ hg)) Γ t A h Γ' hΓ.
@@ -229,8 +226,8 @@ Defined.
 
 Arguments Build_pp_sigT {_ _} _ _.
 
-Notation "( x ; y ; .. ; z )" :=
-  (Build_pp_sigT .. (Build_pp_sigT x y) .. z) : type_scope.
+Notation "( x ; .. ; y ; z )" :=
+  (Build_pp_sigT x (.. (Build_pp_sigT y z) ..)) : type_scope.
 
 Lemma nice_HeqRefl :
   forall {Σ} (hg : type_glob Σ)
@@ -241,10 +238,19 @@ Lemma nice_HeqRefl :
 Proof.
   intros Σ hg Γ u v A h Γ' hΓ hn.
   dependent induction hn.
-  - pose (tm := match type_translation hg hu hΓ with (A' ; (u' ; hu') ) => sHeqRefl A' u' end).
+  - pose (tm := match type_translation hg hu hΓ with (A' ; u' ; hu' ) => sHeqRefl A' u' end).
     change (isHeqRefl tm). constructor.
-  - pose (tm := match eq_translation hg h hΓ with (A' ; (A'' ; (u' ; (v' ; (p' ; h')))) ) => sHeqSym p' end).
+  - specialize (IHhn _ hΓ).
+    pose (tm := match eq_translation hg h hΓ with
+                | (A' ; A'' ; u' ; v' ; p' ; h' ) => 
+                  match decHeqRefl p' with
+                  | inleft i => sHeqRefl A' u'
+                  | inright _ => sHeqSym p'
+                  end
+                end).
     change (isHeqRefl tm).
+    
+    set (p := equality_term (eq_translation hg h hΓ)) in *.
     (* Need to optimise. *)
     admit.
   - 

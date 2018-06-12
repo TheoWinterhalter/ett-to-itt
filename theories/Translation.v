@@ -143,11 +143,24 @@ Proof.
   all: assumption.
 Defined.
 
+(* For optimisation, we remark that we can decide whenever an heterogenous
+   equality is reflexivity.
+ *)
+Inductive isHeqRefl : sterm -> Type :=
+| is_HeqRefl A u : isHeqRefl (sHeqRefl A u).
+
+Definition decHeqRefl t : dec (isHeqRefl t).
+  refine (
+    match t with
+    | sHeqRefl A u => inleft (is_HeqRefl A u)
+    | _ => inright (fun e => _)
+    end
+  ). all: inversion e.
+Defined.
+
 Scheme typing_ind := Induction for XTyping.typing Sort Type
   with wf_ind := Induction for XTyping.wf Sort Type
   with eq_term_ind := Induction for XTyping.eq_term Sort Type.
-
-(* Set Printing Depth 100. *)
 
 (* Combined Scheme typing_all from typing_ind , wf_ind , eq_term_ind. *)
 
@@ -823,10 +836,27 @@ Proof.
     (* eq_symmetry *)
     + destruct (H _ hΓ)
         as [A' [A'' [u' [v' [p' h']]]]].
-      destruct h' as [[[[[? ?] ?] ?] ?] hp'].
-      exists A'', A', v', u', (sHeqSym p').
-      repeat split ; try assumption.
-      eapply type_HeqSym' ; eassumption.
+      destruct (decHeqRefl p') as [i | _].
+      * (* Local optimisation *)
+        exists A'', A', v', u', (sHeqRefl A' u').
+        destruct i as [A1 u1].
+        destruct h' as [[[[[? ?] ?] ?] ?] hp'].
+        repeat split ; try assumption.
+        ttinv hp'. destruct (heq_conv_inv h1) as [[[eA eu] eA'] ev].
+        destruct (istype_type hg hp') as [z heq]. ttinv heq.
+        eapply type_conv.
+        -- eapply type_HeqRefl' ; eassumption.
+        -- eapply type_Heq ; eassumption.
+        -- apply cong_Heq ; try apply conv_refl.
+           ++ eapply conv_trans ; try eassumption.
+              apply conv_sym. assumption.
+           ++ eapply conv_trans ; try eassumption.
+              apply conv_sym. assumption.
+      * (* The proof isn't refl, we go on with the symmetry *)
+        exists A'', A', v', u', (sHeqSym p').
+        destruct h' as [[[[[? ?] ?] ?] ?] hp'].
+        repeat split ; try assumption.
+        eapply type_HeqSym' ; eassumption.
 
     (* eq_transitivity *)
     + destruct (H _ hΓ)
