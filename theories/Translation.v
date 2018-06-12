@@ -158,6 +158,35 @@ Definition decHeqRefl t : dec (isHeqRefl t).
   ). all: inversion e.
 Defined.
 
+(* Optimised symmetry *)
+Definition optHeqSym p :=
+  match p with
+  | sHeqRefl A u => sHeqRefl A u
+  | _ => sHeqSym p
+  end.
+
+Lemma opt_HeqSym :
+  forall {Σ Γ A a B b p},
+    type_glob Σ ->
+    Σ ;;; Γ |-i p : sHeq A a B b ->
+    Σ ;;; Γ |-i optHeqSym p : sHeq B b A a.
+Proof.
+  intros Σ Γ A a B b p hg h.
+  case (decHeqRefl p).
+  - intros i. destruct i as [C c].
+    simpl. 
+    ttinv h. destruct (heq_conv_inv h2) as [[[eA eu] eA'] ev].
+    destruct (istype_type hg h) as [z heq]. ttinv heq.
+    eapply type_conv.
+    + eapply type_HeqRefl' ; eassumption.
+    + eapply type_Heq ; eassumption.
+    + apply cong_Heq ; assumption.
+  - intros e. destruct p.
+    16: exfalso ; apply e ; constructor.
+    all: simpl ; apply type_HeqSym' ; assumption.
+Defined.
+
+
 Scheme typing_ind := Induction for XTyping.typing Sort Type
   with wf_ind := Induction for XTyping.wf Sort Type
   with eq_term_ind := Induction for XTyping.eq_term Sort Type.
@@ -836,27 +865,10 @@ Proof.
     (* eq_symmetry *)
     + destruct (H _ hΓ)
         as [A' [A'' [u' [v' [p' h']]]]].
-      destruct (decHeqRefl p') as [i | _].
-      * (* Local optimisation *)
-        exists A'', A', v', u', (sHeqRefl A' u').
-        destruct i as [A1 u1].
-        destruct h' as [[[[[? ?] ?] ?] ?] hp'].
-        repeat split ; try assumption.
-        ttinv hp'. destruct (heq_conv_inv h1) as [[[eA eu] eA'] ev].
-        destruct (istype_type hg hp') as [z heq]. ttinv heq.
-        eapply type_conv.
-        -- eapply type_HeqRefl' ; eassumption.
-        -- eapply type_Heq ; eassumption.
-        -- apply cong_Heq ; try apply conv_refl.
-           ++ eapply conv_trans ; try eassumption.
-              apply conv_sym. assumption.
-           ++ eapply conv_trans ; try eassumption.
-              apply conv_sym. assumption.
-      * (* The proof isn't refl, we go on with the symmetry *)
-        exists A'', A', v', u', (sHeqSym p').
-        destruct h' as [[[[[? ?] ?] ?] ?] hp'].
-        repeat split ; try assumption.
-        eapply type_HeqSym' ; eassumption.
+      exists A'', A', v', u', (optHeqSym p').
+      destruct h' as [[[[[? ?] ?] ?] ?] hp'].
+      repeat split ; try assumption.
+      eapply opt_HeqSym ; eassumption.
 
     (* eq_transitivity *)
     + destruct (H _ hΓ)

@@ -243,16 +243,12 @@ Proof.
   - specialize (IHhn _ hΓ).
     pose (tm := match eq_translation hg h hΓ with
                 | (A' ; A'' ; u' ; v' ; p' ; h' ) => 
-                  match decHeqRefl p' with
-                  | inleft i => sHeqRefl A' u'
-                  | inright _ => sHeqSym p'
-                  end
+                  optHeqSym p'
                 end).
+    Opaque optHeqSym.
     change (isHeqRefl tm).
-    
-    set (p := equality_term (eq_translation hg h hΓ)) in *.
-    (* Need to optimise. *)
-    admit.
+    Transparent optHeqSym.
+    unfold equality_term in IHhn. destruct IHhn. simpl in tm. constructor.
   - 
 Abort.
 
