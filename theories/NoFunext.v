@@ -214,6 +214,9 @@ Inductive isHeqRefl : sterm -> Type :=
 | is_HeqRefl A u : isHeqRefl (sHeqRefl A u).
 
 (* TODO Move in Translation? *)
+Definition type_translation {Σ} hg {Γ t A} h {Γ'} hΓ :=
+  pi2_ (pi1_ (@complete_translation Σ hg)) Γ t A h Γ' hΓ.
+
 Definition eq_translation {Σ} hg {Γ u v A} h {Γ'} hΓ :=
   pi2_ (@complete_translation Σ hg) Γ u v A h Γ' hΓ.
 
@@ -224,16 +227,26 @@ Proof.
   exact p'.
 Defined.
 
+Arguments Build_pp_sigT {_ _} _ _.
+
+Notation "( x ; y ; .. ; z )" :=
+  (Build_pp_sigT .. (Build_pp_sigT x y) .. z) : type_scope.
+
 Lemma nice_HeqRefl :
-  forall {Σ} (hg : type_glob Σ) 
+  forall {Σ} (hg : type_glob Σ)
     {Γ u v A} (h : Σ ;;; Γ |-x u = v : A)
     {Γ'} (hΓ : Σ |--i Γ' # ⟦ Γ ⟧),
     nice_eq_term h noReflection ->
-    let p := equality_term (eq_translation hg h hΓ) in
-    isHeqRefl p.
+    isHeqRefl (equality_term (eq_translation hg h hΓ)).
 Proof.
-  intros Σ hg Γ u v A h Γ' hΓ hn p.
+  intros Σ hg Γ u v A h Γ' hΓ hn.
   dependent induction hn.
-  -
+  - pose (tm := match type_translation hg hu hΓ with (A' ; (u' ; hu') ) => sHeqRefl A' u' end).
+    change (isHeqRefl tm). constructor.
+  - pose (tm := match eq_translation hg h hΓ with (A' ; (A'' ; (u' ; (v' ; (p' ; h')))) ) => sHeqSym p' end).
+    change (isHeqRefl tm).
+    (* Need to optimise. *)
+    admit.
+  - 
 Abort.
 

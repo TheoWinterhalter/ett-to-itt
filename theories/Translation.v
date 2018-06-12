@@ -814,8 +814,8 @@ Proof.
 
     (* eq_reflexivity *)
     + destruct (H _ hΓ) as [A' [u' hu']].
-      destruct hu' as [[[? ?] ?] hu'].
       exists A', A', u', u', (sHeqRefl A' u').
+      destruct hu' as [[[? ?] ?] hu'].
       repeat split ; try assumption.
       destruct (istype_type hg hu') as [s' hA'].
       eapply type_HeqRefl ; eassumption.
