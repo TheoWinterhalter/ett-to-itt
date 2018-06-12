@@ -244,6 +244,18 @@ Proof.
     change (isHeqRefl tm).
     Transparent optHeqSym.
     unfold equality_term in IHhn. destruct IHhn. simpl in tm. constructor.
-  - 
+  - (* This property most likely doesn't hold for transitivity unfortunately *)
+    give_up.
+  - (* There are inversions involved, that's a bit problematic. *)
+    (* pose (tm :=  *)
+    (*   let '(_ ; A'' ; hA'' ) := type_translation hg hA hΓ in *)
+    (*   let th : type_head (head (sSort s1)) := type_headSort s1 in *)
+    (*   let '(T' ; ((A' ; hA'), hh)) := choose_type hg th hA'' in *)
+    (*   let '(_ ; B'' ; hB'') := type_translation hg (trans_snoc hΓ hA') hB in *)
+    (*   let th' : type_head (head (sSort s2)) := type_headSort s2 in *)
+    (*   let '(T'' ; ((B' ; hB'), hh')) := choose_type hg th' hB'' in *)
+    (*   true *)
+    (* ). *)
+    (* change (isHeqRefl tm). constructor. *)
 Abort.
 
