@@ -212,9 +212,35 @@ Definition type_translation {Σ} hg {Γ t A} h {Γ'} hΓ :=
 Definition eq_translation {Σ} hg {Γ u v A} h {Γ'} hΓ :=
   pi2_ (@complete_translation Σ hg) Γ u v A h Γ' hΓ.
 
-(* Theorem term_identity : *)
-(*   forall {Σ} (hg : type_glob Σ) *)
-(*     {Γ t A} (h : Σ ;;; Γ |-x t : A) *)
-(*     {Γ'} (hΓ : Σ |--i Γ' # ⟦ Γ ⟧)), *)
-(*     itt_typing h -> *)
-(*     type_translation hg h hΓ = t *)
+Theorem term_identity :
+  forall {Σ} (hg : type_glob Σ)
+    {Γ t A} (h : Σ ;;; Γ |-x t : A)
+    {Γ'} (hΓ : Σ |--i Γ' # ⟦ Γ ⟧),
+    itt_typing h ->
+    let '(A' ; t' ; _) := type_translation hg h hΓ in
+    t = t'.
+Proof.
+  intros Σ hg Γ t A h Γ' hΓ hi.
+  induction hi.
+  all: try reflexivity.
+  - (* Problems with computation again. *)
+    (* pose (tmA := *)
+    (*   let '(S' ; A' ; hA') := type_translation hg hA hΓ in *)
+    (*   let th : type_head (head (sSort s1)) := type_headSort s1 in *)
+    (*   let '(T' ; ((A'' ; hA''), hh)) := choose_type hg th hA' in *)
+    (*   true *)
+    (* ). *)
+    (* We may need to prove A' = A as well in the theorem to make sure
+       change_type/choose_type don't do anything. *)
+    specialize (IHhi1 hΓ).
+    admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+Abort.
