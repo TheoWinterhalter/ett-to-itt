@@ -218,22 +218,32 @@ Theorem term_identity :
     {Γ'} (hΓ : Σ |--i Γ' # ⟦ Γ ⟧),
     itt_typing h ->
     let '(A' ; t' ; _) := type_translation hg h hΓ in
-    t = t'.
+    (t = t') * (A = A').
 Proof.
   intros Σ hg Γ t A h Γ' hΓ hi.
   induction hi.
-  all: try reflexivity.
-  - (* Problems with computation again. *)
-    (* pose (tmA := *)
-    (*   let '(S' ; A' ; hA') := type_translation hg hA hΓ in *)
-    (*   let th : type_head (head (sSort s1)) := type_headSort s1 in *)
-    (*   let '(T' ; ((A'' ; hA''), hh)) := choose_type hg th hA' in *)
-    (*   true *)
-    (* ). *)
-    (* We may need to prove A' = A as well in the theorem to make sure
-       change_type/choose_type don't do anything. *)
-    specialize (IHhi1 hΓ).
-    admit.
+  all: try (split ; reflexivity).
+  - split.
+    + reflexivity.
+    + unshelve refine (let isdecl' : n < #|Γ'| := _ in _).
+      { destruct hΓ as [iΓ _]. now rewrite <- (length_increl iΓ). }
+      match goal with
+      | |- ?t = _ => change (t = lift0 (S n) (safe_nth Γ' (exist _ n isdecl')))
+      end.
+      f_equal.
+      (* We probably need to know context translation is also the identity. *)
+      admit.
+  - split. 
+    + (* Problems with computation again. *)
+      (* pose (tmA := *)
+      (*   let '(S' ; A' ; hA') := type_translation hg hA hΓ in *)
+      (*   let th : type_head (head (sSort s1)) := type_headSort s1 in *)
+      (*   let '(T' ; ((A'' ; hA''), hh)) := choose_type hg th hA' in *)
+      (*   true *)
+      (* ). *)
+      specialize (IHhi1 hΓ).
+      admit.
+    + admit.
   - admit.
   - admit.
   - admit.
