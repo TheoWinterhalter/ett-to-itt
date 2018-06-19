@@ -151,291 +151,15 @@ Scheme typing_ind := Induction for XTyping.typing Sort Type
 
 (* Combined Scheme typing_all from typing_ind , wf_ind , eq_term_ind. *)
 
-Definition typing_all : forall (Σ : sglobal_context)
-         (P0 : forall s : scontext, XTyping.wf Σ s -> Type)
-         (P : forall (s : scontext) (s0 s1 : sterm),
-              Σ;;; s |-x s0 : s1 -> Type)
-         (P1 : forall (s : scontext) (s0 s1 s2 : sterm),
-               Σ;;; s |-x s0 = s1 : s2 -> Type),
-       P0 [] (XTyping.wf_nil Σ) ->
-       (forall (Γ : scontext) (A : sterm)
-          (s : sort) (w : XTyping.wf Σ Γ),
-        P0 Γ w ->
-        forall t : Σ;;; Γ |-x A : sSort s,
-        P Γ A (sSort s) t ->
-        P0 (Γ,, A) (XTyping.wf_snoc Σ Γ A s w t))->
-       (forall (Γ : scontext) (n : nat) (w : XTyping.wf Σ Γ),
-        P0 Γ w ->
-        forall isdecl : n < #|Γ|,
-        P Γ (sRel n)
-          (lift0 (S n)
-             (safe_nth Γ (exist (fun n0 : nat => n0 < #|Γ|) n isdecl)))
-          (XTyping.type_Rel Σ Γ n w isdecl)) ->
-       (forall (Γ : scontext) (s : sort) (w : XTyping.wf Σ Γ),
-        P0 Γ w ->
-        P Γ (sSort s) (sSort (succ_sort s)) (XTyping.type_Sort Σ Γ s w)) ->
-       (forall (Γ : scontext) (n : name) (t b : sterm)
-          (s1 s2 : sort) (t0 : Σ;;; Γ |-x t : sSort s1),
-        P Γ t (sSort s1) t0 ->
-        forall t1 : Σ;;; Γ,, t |-x b : sSort s2,
-        P (Γ,, t) b (sSort s2) t1 ->
-        P Γ (sProd n t b) (sSort (max_sort s1 s2))
-          (XTyping.type_Prod Σ Γ n t b s1 s2 t0 t1)) ->
-       (forall (Γ : scontext) (n n' : name) (t b : sterm)
-          (s1 s2 : sort) (bty : sterm) (t0 : Σ;;; Γ |-x t : sSort s1),
-        P Γ t (sSort s1) t0 ->
-        forall t1 : Σ;;; Γ,, t |-x bty : sSort s2,
-        P (Γ,, t) bty (sSort s2) t1 ->
-        forall t2 : Σ;;; Γ,, t |-x b : bty,
-        P (Γ,, t) b bty t2 ->
-        P Γ (sLambda n t bty b) (sProd n' t bty)
-          (XTyping.type_Lambda Σ Γ n n' t b s1 s2 bty t0 t1 t2)) ->
-       (forall (Γ : scontext) (n : name) (s1 s2 : sort)
-          (t A B u : sterm) (t0 : Σ;;; Γ |-x A : sSort s1),
-        P Γ A (sSort s1) t0 ->
-        forall t1 : Σ;;; Γ,, A |-x B : sSort s2,
-        P (Γ,, A) B (sSort s2) t1 ->
-        forall t2 : Σ;;; Γ |-x t : sProd n A B,
-        P Γ t (sProd n A B) t2 ->
-        forall t3 : Σ;;; Γ |-x u : A,
-        P Γ u A t3 ->
-        P Γ (sApp t A B u) (B {0 := u})
-          (XTyping.type_App Σ Γ n s1 s2 t A B u t0 t1 t2 t3)) ->
-       (forall (Γ : scontext) (n : name) (t b : sterm) (s1 s2 : sort)
-          (t0 : Σ;;; Γ |-x t : sSort s1),
-           P Γ t (sSort s1) t0 ->
-           forall t1 : Σ;;; Γ,, t |-x b : sSort s2,
-             P (Γ,, t) b (sSort s2) t1 ->
-             P Γ (sSum n t b) (sSort (max_sort s1 s2))
-               (XTyping.type_Sum Σ Γ n t b s1 s2 t0 t1)) ->
-       (forall (Γ : scontext) (n : name) (A B u v : sterm) (s1 s2 : sort)
-          (t : Σ;;; Γ |-x A : sSort s1),
-        P Γ A (sSort s1) t ->
-        forall t0 : Σ;;; Γ,, A |-x B : sSort s2,
-        P (Γ,, A) B (sSort s2) t0 ->
-        forall t1 : Σ;;; Γ |-x u : A,
-        P Γ u A t1 ->
-        forall t2 : Σ;;; Γ |-x v : B {0 := u},
-        P Γ v (B {0 := u}) t2 ->
-        P Γ (sPair A B u v) (sSum n A B)
-          (XTyping.type_Pair Σ Γ n A B u v s1 s2 t t0 t1 t2)) ->
-       (forall (Γ : scontext) (n : name) (A B : sterm) (s1 s2 : sort) (p : sterm)
-          (t : Σ;;; Γ |-x p : sSum n A B),
-           P Γ p (sSum n A B) t ->
-           forall t0 : Σ;;; Γ |-x A : sSort s1,
-             P Γ A (sSort s1) t0 ->
-             forall t1 : Σ;;; Γ,, A |-x B : sSort s2,
-               P (Γ,, A) B (sSort s2) t1 ->
-               P Γ (sPi1 A B p) A (XTyping.type_Pi1 Σ Γ n A B s1 s2 p t t0 t1)) ->
-       (forall (Γ : scontext) (n : name) (A B : sterm) (s1 s2 : sort) (p : sterm)
-          (t : Σ;;; Γ |-x p : sSum n A B),
-           P Γ p (sSum n A B) t ->
-           forall t0 : Σ;;; Γ |-x A : sSort s1,
-             P Γ A (sSort s1) t0 ->
-             forall t1 : Σ;;; Γ,, A |-x B : sSort s2,
-               P (Γ,, A) B (sSort s2) t1 ->
-               P Γ (sPi2 A B p) (B {0 := sPi1 A B p})
-                 (XTyping.type_Pi2 Σ Γ n A B s1 s2 p t t0 t1)) ->
-       (forall (Γ : scontext) (s : sort) (A u v : sterm)
-          (t : Σ;;; Γ |-x A : sSort s),
-        P Γ A (sSort s) t ->
-        forall t0 : Σ;;; Γ |-x u : A,
-        P Γ u A t0 ->
-        forall t1 : Σ;;; Γ |-x v : A,
-        P Γ v A t1 ->
-        P Γ (sEq A u v) (sSort s) (XTyping.type_Eq Σ Γ s A u v t t0 t1)) ->
-       (forall (Γ : scontext) (s : sort) (A u : sterm)
-          (t : Σ;;; Γ |-x A : sSort s),
-        P Γ A (sSort s) t ->
-        forall t0 : Σ;;; Γ |-x u : A,
-        P Γ u A t0 ->
-        P Γ (sRefl A u) (sEq A u u) (XTyping.type_Refl Σ Γ s A u t t0)) ->
-       (forall (Γ : scontext) (id : ident) (ty : sterm) (w : XTyping.wf Σ Γ),
-        P0 Γ w -> forall e : lookup_glob Σ id = Some ty,
-        P Γ (sAx id) ty (XTyping.type_Ax Σ Γ id ty w e)) ->
-       (forall (Γ : scontext) (t A B : sterm) (s : sort)
-          (t0 : Σ;;; Γ |-x t : A),
-        P Γ t A t0 ->
-        forall t1 : Σ;;; Γ |-x B : sSort s,
-        P Γ B (sSort s) t1 ->
-        forall e : Σ;;; Γ |-x A = B : sSort s,
-        P1 Γ A B (sSort s) e ->
-        P Γ t B (XTyping.type_conv Σ Γ t A B s t0 t1 e)) ->
-       (forall (Γ : scontext) (u A : sterm) (t : Σ;;; Γ |-x u : A),
-        P Γ u A t -> P1 Γ u u A (XTyping.eq_reflexivity Σ Γ u A t)) ->
-       (forall (Γ : scontext) (u v A : sterm) (e : Σ;;; Γ |-x u = v : A),
-        P1 Γ u v A e -> P1 Γ v u A (XTyping.eq_symmetry Σ Γ u v A e)) ->
-       (forall (Γ : scontext) (u v w A : sterm) (e : Σ;;; Γ |-x u = v : A),
-        P1 Γ u v A e ->
-        forall e0 : Σ;;; Γ |-x v = w : A,
-        P1 Γ v w A e0 -> P1 Γ u w A (XTyping.eq_transitivity Σ Γ u v w A e e0)) ->
-       (forall (Γ : scontext) (s1 s2 : sort) (n : name)
-          (A B t u : sterm) (t0 : Σ;;; Γ |-x A : sSort s1),
-        P Γ A (sSort s1) t0 ->
-        forall t1 : Σ;;; Γ,, A |-x B : sSort s2,
-        P (Γ,, A) B (sSort s2) t1 ->
-        forall t2 : Σ;;; Γ,, A |-x t : B,
-        P (Γ,, A) t B t2 ->
-        forall t3 : Σ;;; Γ |-x u : A,
-        P Γ u A t3 ->
-        P1 Γ (sApp (sLambda n A B t) A B u) (t {0 := u})
-          (B {0 := u}) (XTyping.eq_beta Σ Γ s1 s2 n A B t u t0 t1 t2 t3)) ->
-       (forall (Γ : scontext) (s : sort) (T1 T2 t1 t2 : sterm)
-          (e : Σ;;; Γ |-x t1 = t2 : T1),
-        P1 Γ t1 t2 T1 e ->
-        forall e0 : Σ;;; Γ |-x T1 = T2 : sSort s,
-        P1 Γ T1 T2 (sSort s) e0 ->
-        P1 Γ t1 t2 T2 (XTyping.eq_conv Σ Γ s T1 T2 t1 t2 e e0)) ->
-       (forall (Γ : scontext) (n1 n2 : name) (A1 A2 B1 B2 : sterm)
-          (s1 s2 : sort) (e : Σ;;; Γ |-x A1 = A2 : sSort s1),
-        P1 Γ A1 A2 (sSort s1) e ->
-        forall e0 : Σ;;; Γ,, A1 |-x B1 = B2 : sSort s2,
-        P1 (Γ,, A1) B1 B2 (sSort s2) e0 ->
-        forall t : Σ;;; Γ,, A1 |-x B1 : sSort s2,
-        P (Γ,, A1) B1 (sSort s2) t ->
-        forall t0 : Σ;;; Γ,, A2 |-x B2 : sSort s2,
-        P (Γ,, A2) B2 (sSort s2) t0 ->
-        P1 Γ (sProd n1 A1 B1) (sProd n2 A2 B2) (sSort (max_sort s1 s2))
-          (XTyping.cong_Prod Σ Γ n1 n2 A1 A2 B1 B2 s1 s2 e e0 t t0)) ->
-       (forall (Γ : scontext) (n1 n2 n' : name) (A1 A2 B1 B2 t1 t2 : sterm)
-          (s1 s2 : sort) (e : Σ;;; Γ |-x A1 = A2 : sSort s1),
-        P1 Γ A1 A2 (sSort s1) e ->
-        forall e0 : Σ;;; Γ,, A1 |-x B1 = B2 : sSort s2,
-        P1 (Γ,, A1) B1 B2 (sSort s2) e0 ->
-        forall e1 : Σ;;; Γ,, A1 |-x t1 = t2 : B1,
-        P1 (Γ,, A1) t1 t2 B1 e1 ->
-        forall t : Σ;;; Γ,, A1 |-x B1 : sSort s2,
-        P (Γ,, A1) B1 (sSort s2) t ->
-        forall t0 : Σ;;; Γ,, A2 |-x B2 : sSort s2,
-        P (Γ,, A2) B2 (sSort s2) t0 ->
-        forall t3 : Σ;;; Γ,, A1 |-x t1 : B1,
-        P (Γ,, A1) t1 B1 t3 ->
-        forall t4 : Σ;;; Γ,, A2 |-x t2 : B2,
-        P (Γ,, A2) t2 B2 t4 ->
-        P1 Γ (sLambda n1 A1 B1 t1) (sLambda n2 A2 B2 t2)
-          (sProd n' A1 B1)
-          (XTyping.cong_Lambda Σ Γ n1 n2 n' A1 A2 B1 B2 t1 t2 s1 s2 e e0 e1 t
-             t0 t3 t4)) ->
-       (forall (Γ : scontext) (n1 n2 : name) (s1 s2 : sort)
-          (t1 t2 A1 A2 B1 B2 u1 u2 : sterm)
-          (e : Σ;;; Γ |-x A1 = A2 : sSort s1),
-        P1 Γ A1 A2 (sSort s1) e ->
-        forall e0 : Σ;;; Γ,, A1 |-x B1 = B2 : sSort s2,
-        P1 (Γ,, A1) B1 B2 (sSort s2) e0 ->
-        forall e1 : Σ;;; Γ |-x t1 = t2 : sProd n1 A1 B1,
-        P1 Γ t1 t2 (sProd n1 A1 B1) e1 ->
-        forall e2 : Σ;;; Γ |-x u1 = u2 : A1,
-        P1 Γ u1 u2 A1 e2 ->
-        forall t : Σ;;; Γ,, A1 |-x B1 : sSort s2,
-        P (Γ,, A1) B1 (sSort s2) t ->
-        forall t0 : Σ;;; Γ,, A2 |-x B2 : sSort s2,
-        P (Γ,, A2) B2 (sSort s2) t0 ->
-        forall t3 : Σ;;; Γ |-x t1 : sProd n1 A1 B1,
-        P Γ t1 (sProd n1 A1 B1) t3 ->
-        forall t4 : Σ;;; Γ |-x t2 : sProd n2 A2 B2,
-        P Γ t2 (sProd n2 A2 B2) t4 ->
-        forall t5 : Σ;;; Γ |-x u1 : A1,
-        P Γ u1 A1 t5 ->
-        forall t6 : Σ;;; Γ |-x u2 : A2,
-        P Γ u2 A2 t6 ->
-        P1 Γ (sApp t1 A1 B1 u1) (sApp t2 A2 B2 u2)
-          (B1 {0 := u1})
-          (XTyping.cong_App Σ Γ n1 n2 s1 s2 t1 t2 A1 A2 B1 B2 u1 u2 e e0 e1 e2
-             t t0 t3 t4 t5 t6)) ->
-       (forall (Γ : scontext) (n1 n2 : name) (A1 A2 B1 B2 : sterm) (s1 s2 : sort) (e : Σ;;; Γ |-x A1 = A2 : sSort s1),
-        P1 Γ A1 A2 (sSort s1) e ->
-        forall e0 : Σ;;; Γ,, A1 |-x B1 = B2 : sSort s2,
-        P1 (Γ,, A1) B1 B2 (sSort s2) e0 ->
-        forall t : Σ;;; Γ,, A1 |-x B1 : sSort s2,
-        P (Γ,, A1) B1 (sSort s2) t ->
-        forall t0 : Σ;;; Γ,, A2 |-x B2 : sSort s2,
-        P (Γ,, A2) B2 (sSort s2) t0 ->
-        P1 Γ (sSum n1 A1 B1) (sSum n2 A2 B2) (sSort (max_sort s1 s2))
-           (XTyping.cong_Sum Σ Γ n1 n2 A1 A2 B1 B2 s1 s2 e e0 t t0)) ->
-       (forall (Γ : scontext) (n : name) (A1 A2 B1 B2 u1 u2 v1 v2 : sterm)
-          (s1 s2 : sort) (e : Σ;;; Γ |-x A1 = A2 : sSort s1),
-        P1 Γ A1 A2 (sSort s1) e ->
-        forall e0 : Σ;;; Γ,, A1 |-x B1 = B2 : sSort s2,
-        P1 (Γ,, A1) B1 B2 (sSort s2) e0 ->
-        forall e1 : Σ;;; Γ |-x u1 = u2 : A1,
-        P1 Γ u1 u2 A1 e1 ->
-        forall e2 : Σ;;; Γ |-x v1 = v2 : B1 {0 := u1},
-        P1 Γ v1 v2 (B1 {0 := u1}) e2 ->
-        forall t : Σ;;; Γ,, A1 |-x B1 : sSort s2,
-        P (Γ,, A1) B1 (sSort s2) t ->
-        forall t0 : Σ;;; Γ,, A2 |-x B2 : sSort s2,
-        P (Γ,, A2) B2 (sSort s2) t0 ->
-        forall t1 : Σ;;; Γ |-x u1 : A1,
-        P Γ u1 A1 t1 ->
-        forall t2 : Σ;;; Γ |-x u2 : A2,
-        P Γ u2 A2 t2 ->
-        forall t3 : Σ;;; Γ |-x v1 : B1 {0 := u1},
-        P Γ v1 (B1 {0 := u1}) t3 ->
-        forall t4 : Σ;;; Γ |-x v2 : B2 {0 := u2},
-        P Γ v2 (B2 {0 := u2}) t4 ->
-        P1 Γ (sPair A1 B1 u1 v1) (sPair A2 B2 u2 v2) (sSum n A1 B1)
-          (XTyping.cong_Pair Σ Γ n A1 A2 B1 B2 u1 u2 v1 v2 s1 s2 e e0 e1 e2 t t0 t1 t2 t3 t4)) ->
-       (forall (Γ : scontext) (nx ny : name) (A1 A2 B1 B2 : sterm) (s1 s2 : sort)
-          (p1 p2 : sterm) (e : Σ;;; Γ |-x p1 = p2 : sSum nx A1 B1),
-        P1 Γ p1 p2 (sSum nx A1 B1) e ->
-        forall e0 : Σ;;; Γ |-x A1 = A2 : sSort s1,
-        P1 Γ A1 A2 (sSort s1) e0 ->
-        forall e1 : Σ;;; Γ,, A1 |-x B1 = B2 : sSort s2,
-        P1 (Γ,, A1) B1 B2 (sSort s2) e1 ->
-        forall t : Σ;;; Γ,, A1 |-x B1 : sSort s2,
-        P (Γ,, A1) B1 (sSort s2) t ->
-        forall t0 : Σ;;; Γ,, A2 |-x B2 : sSort s2,
-        P (Γ,, A2) B2 (sSort s2) t0 ->
-        forall t1 : Σ;;; Γ |-x p1 : sSum nx A1 B1,
-        P Γ p1 (sSum nx A1 B1) t1 ->
-        forall t2 : Σ;;; Γ |-x p2 : sSum ny A2 B2,
-        P Γ p2 (sSum ny A2 B2) t2 ->
-        P1 Γ (sPi1 A1 B1 p1) (sPi1 A2 B2 p2) A1
-           (XTyping.cong_Pi1 Σ Γ nx ny A1 A2 B1 B2 s1 s2 p1 p2 e e0 e1 t t0 t1 t2)) ->
-       (forall (Γ : scontext) (nx ny : name) (A1 A2 B1 B2 : sterm) (s1 s2 : sort)
-          (p1 p2 : sterm) (e : Σ;;; Γ |-x p1 = p2 : sSum nx A1 B1),
-        P1 Γ p1 p2 (sSum nx A1 B1) e ->
-        forall e0 : Σ;;; Γ |-x A1 = A2 : sSort s1,
-        P1 Γ A1 A2 (sSort s1) e0 ->
-        forall e1 : Σ;;; Γ,, A1 |-x B1 = B2 : sSort s2,
-        P1 (Γ,, A1) B1 B2 (sSort s2) e1 ->
-        forall t : Σ;;; Γ,, A1 |-x B1 : sSort s2,
-        P (Γ,, A1) B1 (sSort s2) t ->
-        forall t0 : Σ;;; Γ,, A2 |-x B2 : sSort s2,
-        P (Γ,, A2) B2 (sSort s2) t0 ->
-        forall t1 : Σ;;; Γ |-x p1 : sSum nx A1 B1,
-        P Γ p1 (sSum nx A1 B1) t1 ->
-        forall t2 : Σ;;; Γ |-x p2 : sSum ny A2 B2,
-        P Γ p2 (sSum ny A2 B2) t2 ->
-        P1 Γ (sPi2 A1 B1 p1) (sPi2 A2 B2 p2) (B1 {0 := sPi1 A1 B1 p1})
-          (XTyping.cong_Pi2 Σ Γ nx ny A1 A2 B1 B2 s1 s2 p1 p2 e e0 e1 t t0 t1 t2)) ->
-       (forall (Γ : scontext) (s : sort) (A1 A2 u1 u2 v1 v2 : sterm)
-          (e : Σ;;; Γ |-x A1 = A2 : sSort s),
-        P1 Γ A1 A2 (sSort s) e ->
-        forall e0 : Σ;;; Γ |-x u1 = u2 : A1,
-        P1 Γ u1 u2 A1 e0 ->
-        forall e1 : Σ;;; Γ |-x v1 = v2 : A1,
-        P1 Γ v1 v2 A1 e1 ->
-        P1 Γ (sEq A1 u1 v1) (sEq A2 u2 v2) (sSort s)
-          (XTyping.cong_Eq Σ Γ s A1 A2 u1 u2 v1 v2 e e0 e1)) ->
-       (forall (Γ : scontext) (s : sort) (A1 A2 u1 u2 : sterm)
-          (e : Σ;;; Γ |-x A1 = A2 : sSort s),
-        P1 Γ A1 A2 (sSort s) e ->
-        forall e0 : Σ;;; Γ |-x u1 = u2 : A1,
-        P1 Γ u1 u2 A1 e0 ->
-        P1 Γ (sRefl A1 u1) (sRefl A2 u2) (sEq A1 u1 u1)
-          (XTyping.cong_Refl Σ Γ s A1 A2 u1 u2 e e0)) ->
-       (forall (Γ : scontext) (A u v e : sterm) (t : Σ;;; Γ |-x e : sEq A u v),
-        P Γ e (sEq A u v) t -> P1 Γ u v A (reflection Σ Γ A u v e t)) ->
-       (forall (s : scontext) (w : XTyping.wf Σ s), P0 s w) *
-       (forall (s : scontext) (s0 s1 : sterm) (t : Σ;;; s |-x s0 : s1),
-           P s s0 s1 t) *
-       (forall (s : scontext) (s0 s1 s2 : sterm) (e : Σ;;; s |-x s0 = s1 : s2),
-           P1 s s0 s1 s2 e).
-Proof.
-  intros; repeat split ; [
-  eapply wf_ind | eapply typing_ind | eapply eq_term_ind]; eauto.
-Defined.
+Definition typing_all :=
+  fun Σ P0 P P1 X X0 X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12 X13 X14 X15
+    X16 X17 X18 X19 X20 X21 X22 X23 X24 X25 X26 X27 X28 =>
+    (wf_ind Σ P P0 P1 X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12 X13 X X0 X14 X15
+            X16 X17 X18 X19 X20 X21 X22 X23 X24 X25 X26 X27 X28,
+     typing_ind Σ P P0 P1 X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12 X13 X X0 X14
+                X15 X16 X17 X18 X19 X20 X21 X22 X23 X24 X25 X26 X27 X28,
+     eq_term_ind Σ P P0 P1 X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12 X13 X X0 X14
+                 X15 X16 X17 X18 X19 X20 X21 X22 X23 X24 X25 X26 X27 X28).
 
 Definition complete_translation {Σ} :
   type_glob Σ ->
@@ -2940,3 +2664,31 @@ Proof.
 Defined.
 
 End Translation.
+
+(* Consistency of ETT relative to consistency of ITT. *)
+Corollary consistency :
+  forall {Σ t},
+    type_glob Σ ->
+    Σ ;;; [] |-x t : sProd nAnon (sSort 0) (sRel 0) ->
+    ∑ t', Σ ;;; [] |-i t' : sProd nAnon (sSort 0) (sRel 0).
+Proof.
+  intros Σ t hg h.
+  set (T := sProd nAnon (sSort 0) (sRel 0)) in *.
+  assert (h' : Σ ;;;; [] |--- [ T ] : sSort 1
+             # ⟦ [] |--- [ T ] : sSort 1 ⟧).
+  { repeat split.
+    - constructor.
+    - constructor.
+    - apply inrel_refl. repeat constructor.
+    - change 1 with (max_sort 1 0). econstructor.
+      + econstructor. constructor.
+      + refine (type_Rel _ _ _ _ _).
+        * repeat econstructor.
+        * auto with arith.
+  }
+  destruct (complete_translation hg) as [[_ thm] _].
+  destruct (thm _ _ _ h [] ltac:(repeat constructor)) as [A' [t'' h'']].
+  destruct (change_type hg h'' h') as [t' [_ ht']].
+  exists t'. assumption.
+Defined.
+  
