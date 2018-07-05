@@ -23,6 +23,7 @@ theories/Translation.v
 theories/Quotes.v
 theories/FinalTranslation.v
 theories/FullQuote.v
+theories/IChecker.v
 theories/ExampleQuotes.v
 theories/ExamplesUtil.v
 theories/Example.v
