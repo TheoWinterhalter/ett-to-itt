@@ -10,7 +10,7 @@
 ## Overview
 
 This work is a Coq formalisation of a translation from ETT to ITT that can
-be interfaced with Coq thanks to the TemplateCoq plugin.
+be interfaced with Coq thanks to the MetaCoq plugin.
 Additionally, sorts are handled quite generically (although without cumulativity)
 which means in particular that we can have a translation from
 Homotopy Type System (HTS) to Two-Level Type Theory (2TT) as a direct application.
@@ -41,7 +41,7 @@ to any other. With it we can write:
 ```coq
 Definition pseudoid (A B : Type) (e : A = B) (x : A) : B := {! x !}.
 ```
-Using the power of TemplateCoq, we can quote it, translate it using our
+Using the power of MetaCoq, we can quote it, translate it using our
 translation, and then unquote it to get back a Coq term:
 ```coq
 Run TemplateProgram (Translate ε "pseudoid").
@@ -118,9 +118,9 @@ vec_rect A
 This project can be compiled with Coq 8.8.1 and requires
 [Equations](http://mattam82.github.io/Coq-Equations/)
 and
-[TemplateCoq](https://github.com/Template-Coq/template-coq/releases/tag/v2.1-beta3).
+[MetaCoq](https://github.com/MetaCoq/metacoq/releases/tag/v2.1-beta3).
 
-*Note: If you have trouble installing TemplateCoq v2.1-beta3, have a look at [this fix](https://github.com/Template-Coq/template-coq/issues/77#issuecomment-439006141).*
+*Note: If you have trouble installing MetaCoq v2.1-beta3, have a look at [this fix](https://github.com/MetaCoq/metacoq/issues/77#issuecomment-439006141).*
 
 If you want to compile the examples, you also need
 [TypingFlags](https://github.com/SimonBoulier/TypingFlags).
@@ -224,13 +224,13 @@ For type checking, we write one tactic for ITT and one for ETT.
 Their respective definitions can be found in
 [IChecking](theories/IChecking.v) and [XChecking](theories/XChecking.v).
 
-### TemplateCoq and Plugin
+### MetaCoq and Plugin
 
 To realise the sugar of ITT, we define some constants in [Quotes](theories/Quotes.v)
-and then quote them to TemplateCoq's inner representation of terms.
-The translation from ITT to TemplateCoq is done in [FinalTranslation](theories/FinalTranslation.v).
+and then quote them to MetaCoq's inner representation of terms.
+The translation from ITT to MetaCoq is done in [FinalTranslation](theories/FinalTranslation.v).
 [FullQuote](theories/FullQuote.v)
-is for the opposite: generating an ITT term from a TemplateCoq (and
+is for the opposite: generating an ITT term from a MetaCoq (and
 thus Coq) term, it is useful to generate examples.
 
 Finally [plugin](theories/plugin.v) defines a plugin using the
