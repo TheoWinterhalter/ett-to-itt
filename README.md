@@ -116,7 +116,7 @@ vec_rect A
 ### Requirements
 
 This project can be compiled with Coq 8.8.1 and requires
-[Equations](http://mattam82.github.io/Coq-Equations/)
+[Equations](http://mattam82.github.io/Coq-Equations/) (version `1.1+8.8`)
 and
 [MetaCoq](https://github.com/MetaCoq/metacoq/releases/tag/v2.1-beta3).
 
