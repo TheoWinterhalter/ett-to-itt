@@ -1,12 +1,13 @@
 (* Subject Reduction *)
 
-From Coq Require Import Bool String List BinPos Compare_dec Lia.
+From Coq Require Import Bool String List BinPos Compare_dec Lia Arith.
 Require Import Equations.Prop.DepElim.
 From Equations Require Import Equations.
 From MetaCoq Require Import Ast utils Typing.
 From Translation
 Require Import util Sorts SAst SLiftSubst Equality SCommon Conversion ITyping
                ITypingInversions ITypingLemmata ContextConversion Uniqueness.
+Import ListNotations.
 
 Section subjred.
 
@@ -75,8 +76,8 @@ Section subjred.
     all: try sr.
     - intros Γ T ht.
       destruct (istype_type hg ht).
-      ttinv ht. ttinv h3.
-      destruct (prod_inv h6).
+      ttinv ht. ttinv h1.
+      destruct (prod_inv h8).
       eapply type_conv ; try eassumption.
       eapply typing_subst ; try eassumption.
       eapply type_conv ; try eassumption.
@@ -88,7 +89,7 @@ Section subjred.
     - intros Γ T ht.
       destruct (istype_type hg ht).
       ttinv ht. ttinv h3.
-      destruct (eq_conv_inv h8) as [[? ?] ?].
+      destruct (eq_conv_inv h9) as [? [? ?]].
       eapply type_conv ; try eassumption.
       eapply conv_trans ; try eassumption.
       apply cong_subst.
@@ -98,8 +99,8 @@ Section subjred.
         apply conv_sym. assumption.
     - intros Γ T' ht.
       destruct (istype_type hg ht).
-      ttinv ht. ttinv h.
-      destruct (eq_conv_inv h6) as [[? ?] ?].
+      ttinv ht. ttinv h0.
+      destruct (eq_conv_inv h7) as [? [? ?]].
       eapply type_conv ; try eassumption.
       eapply conv_trans.
       + eapply conv_sym. eassumption.

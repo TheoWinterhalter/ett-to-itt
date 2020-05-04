@@ -1,11 +1,12 @@
 (* Optimisation on syntax *)
-From Coq Require Import Bool String List BinPos Compare_dec Lia.
+From Coq Require Import Bool String List BinPos Compare_dec Lia Arith.
 Require Import Equations.Prop.DepElim.
 From Equations Require Import Equations.
 From MetaCoq Require Import Ast utils Typing.
 From Translation
 Require Import util Sorts SAst SLiftSubst Equality SCommon XTyping Conversion
 ITyping ITypingInversions ITypingLemmata ITypingAdmissible DecideConversion.
+Import ListNotations.
 
 Section Optim.
 
@@ -44,7 +45,7 @@ Proof.
   case (decHeqRefl p).
   - intros i. destruct i as [C c].
     simpl.
-    ttinv h. destruct (heq_conv_inv h2) as [[[eA eu] eA'] ev].
+    ttinv h. destruct (heq_conv_inv h3) as [eA [eu [eA' ev]]].
     destruct (istype_type hg h) as [z heq]. ttinv heq.
     eapply type_conv.
     + eapply type_HeqRefl' ; eassumption.
@@ -79,8 +80,8 @@ Proof.
   case (decHeqRefl p) ; case (decHeqRefl q).
   - intros iq ip. destruct ip as [D d], iq as [E e].
     simpl.
-    ttinv hp. destruct (heq_conv_inv h1) as [[[DA da] DB] db].
-    ttinv hq. destruct (heq_conv_inv h4) as [[[EB eb] EC] ec].
+    ttinv hp. destruct (heq_conv_inv h2) as [DA [da [DB db]]].
+    ttinv hq. destruct (heq_conv_inv h5) as [EB [eb [EC ec]]].
     eapply type_conv.
     + eapply type_HeqRefl' ; eassumption.
     + eassumption.
@@ -90,7 +91,7 @@ Proof.
       apply cong_Heq ; try apply conv_refl ; assumption.
   - intros bot ip. destruct ip as [D d].
     replace (optHeqTrans (sHeqRefl D d) q) with q.
-    + ttinv hp. destruct (heq_conv_inv h1) as [[[DA da] DB] db].
+    + ttinv hp. destruct (heq_conv_inv h2) as [DA [da [DB db]]].
       eapply type_conv ; try eassumption.
       conv rewrite <- DA, da. apply conv_sym.
       apply cong_Heq ; try apply conv_refl ; assumption.
@@ -98,7 +99,7 @@ Proof.
       exfalso. apply bot. constructor.
   - intros iq bot. destruct iq as [E e].
     replace (optHeqTrans p (sHeqRefl E e)) with p.
-    + ttinv hq. destruct (heq_conv_inv h1) as [[[EB eb] EC] ec].
+    + ttinv hq. destruct (heq_conv_inv h2) as [EB [eb [EC ec]]].
       eapply type_conv ; try eassumption.
       conv rewrite <- EB, eb.
       apply cong_Heq ; try apply conv_refl ; assumption.
@@ -153,12 +154,12 @@ Proof.
   destruct p.
   all: try (simpl ; eapply type_HeqToEq' ; eassumption).
   - simpl. rename p1 into B, p2 into b.
-    ttinv h. destruct (heq_conv_inv h2) as [[[BA bu] _] bv].
+    ttinv h. destruct (heq_conv_inv h3) as [BA [bu [_ bv]]].
     eapply type_conv ; try eassumption.
     + eapply type_Refl' ; eassumption.
     + apply cong_Eq ; assumption.
   - simpl. ttinv h. rename A0 into B, u0 into a, v0 into b.
-    destruct (heq_conv_inv h2) as [[[BA au] _] bv].
+    destruct (heq_conv_inv h5) as [BA [au [_ bv]]].
     eapply type_conv ; try eassumption.
     apply cong_Eq ; assumption.
 Defined.
@@ -203,7 +204,7 @@ Proof.
   destruct p.
   all: try (simpl ; eapply type_HeqTransport' ; eassumption).
   simpl.
-  ttinv hp. destruct (eq_conv_inv h1) as [[? eA] eB].
+  ttinv hp. destruct (eq_conv_inv h2) as [? [eA eB]].
   destruct (istype_type hg hp) as [? hT].
   ttinv hT.
   eapply type_conv.
@@ -234,7 +235,7 @@ Proof.
   destruct p.
   all: try (simpl ; eapply type_EqToHeq' ; eassumption).
   simpl.
-  ttinv h. destruct (eq_conv_inv h2) as [[eA eu] ev].
+  ttinv h. destruct (eq_conv_inv h3) as [eA [eu ev]].
   destruct (istype_type hg h) as [? hT].
   ttinv hT.
   econstructor.
@@ -361,10 +362,10 @@ Proof.
   ttinv hpA. ttinv hpB.
   destruct (istype_type hg hpA) as [? hTA]. ttinv hTA.
   destruct (istype_type hg hpB) as [? hTB]. ttinv hTB.
-  destruct (heq_conv_inv h1) as [[[es1 ?] es2] ?].
-  destruct (heq_conv_inv h4) as [[[es3 eB1] es4] eB2].
-  pose proof (sort_conv_inv h7).
-  pose proof (sort_conv_inv h12).
+  destruct (heq_conv_inv h2) as [es1 [? [es2 ?]]].
+  destruct (heq_conv_inv h5) as [es3 [eB1 [es4 eB2]]].
+  pose proof (sort_conv_inv h10).
+  pose proof (sort_conv_inv h15).
   pose proof (sort_conv_inv es1).
   pose proof (sort_conv_inv es2).
   pose proof (sort_conv_inv es3).
@@ -443,9 +444,9 @@ Proof.
   destruct (istype_type hg hpA) as [? hTA]. ttinv hTA.
   destruct (istype_type hg hpB) as [? hTB]. ttinv hTB.
   destruct (istype_type hg hpt) as [? hTt]. ttinv hTt.
-  destruct (heq_conv_inv h1) as [[[es1 ?] es2] ?].
-  destruct (heq_conv_inv h4) as [[[es3 eB1] es4] eB2].
-  destruct (heq_conv_inv h7) as [[[_ et1] _] et2].
+  destruct (heq_conv_inv h2) as [es1 [? [es2 ?]]].
+  destruct (heq_conv_inv h5) as [es3 [eB1 [es4 eB2]]].
+  destruct (heq_conv_inv h8) as [_ [et1 [_ et2]]].
   assert (sSort s1 ≡ sSort s2).
   { eapply conv_trans ; try eassumption.
     apply conv_sym. assumption.
@@ -540,10 +541,10 @@ Proof.
   destruct (istype_type hg hpB) as [? hTB]. ttinv hTB.
   destruct (istype_type hg hpu) as [? hTu]. ttinv hTu.
   destruct (istype_type hg hpv) as [? hTv]. ttinv hTv.
-  destruct (heq_conv_inv h1) as [[[es1 ?] es2] ?].
-  destruct (heq_conv_inv h4) as [[[es3 eB1] es4] eB2].
-  destruct (heq_conv_inv h7) as [[[? eu1] ?] eu2].
-  destruct (heq_conv_inv h10) as [[[? ev1] ?] ev2].
+  destruct (heq_conv_inv h2) as [es1 [? [es2 ?]]].
+  destruct (heq_conv_inv h5) as [es3 [eB1 [es4 eB2]]].
+  destruct (heq_conv_inv h8) as [? [eu1 [? eu2]]].
+  destruct (heq_conv_inv h11) as [? [ev1 [? ev2]]].
   assert (sSort s1 ≡ sSort s2).
   { eapply conv_trans ; try eassumption.
     apply conv_sym. assumption.
@@ -638,9 +639,9 @@ Proof.
   destruct (istype_type hg hpA) as [? hTA]. ttinv hTA.
   destruct (istype_type hg hpu) as [? hTu]. ttinv hTu.
   destruct (istype_type hg hpv) as [? hTv]. ttinv hTv.
-  destruct (heq_conv_inv h1) as [[[es1 ?] es2] ?].
-  destruct (heq_conv_inv h4) as [[[es3 ?] es4] ?].
-  destruct (heq_conv_inv h7) as [[[es5 ?] es6] ?].
+  destruct (heq_conv_inv h2) as [es1 [? [es2 ?]]].
+  destruct (heq_conv_inv h5) as [es3 [? [es4 ?]]].
+  destruct (heq_conv_inv h8) as [es5 [? [es6 ?]]].
   repeat match goal with
   | h : sSort _ ≡ sSort _ |- _ =>
     pose proof (sort_conv_inv h) ; clear h
@@ -690,8 +691,8 @@ Proof.
   ttinv hpA. ttinv hpu.
   destruct (istype_type hg hpA) as [? hTA]. ttinv hTA.
   destruct (istype_type hg hpu) as [? hTu]. ttinv hTu.
-  destruct (heq_conv_inv h1) as [[[es1 ?] es2] ?].
-  destruct (heq_conv_inv h4) as [[[es3 ?] es4] ?].
+  destruct (heq_conv_inv h2) as [es1 [? [es2 ?]]].
+  destruct (heq_conv_inv h5) as [es3 [? [es4 ?]]].
   repeat match goal with
   | h : sSort _ ≡ sSort _ |- _ =>
     pose proof (sort_conv_inv h) ; clear h

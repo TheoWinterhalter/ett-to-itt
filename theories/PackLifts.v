@@ -1,12 +1,13 @@
 (* Lifts for packing *)
 
-From Coq Require Import Bool String List BinPos Compare_dec Lia.
+From Coq Require Import Bool String List BinPos Compare_dec Lia Arith.
 Require Import Equations.Prop.DepElim.
 From Equations Require Import Equations.
 From MetaCoq Require Import Ast utils Typing.
 From Translation
 Require Import util Sorts SAst SLiftSubst Equality SCommon XTyping
                Conversion ITyping ITypingLemmata ITypingAdmissible.
+Import ListNotations.
 
 Section Pack.
 
