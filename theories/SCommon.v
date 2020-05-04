@@ -103,12 +103,6 @@ Proof.
   apply eq_safe_nth'.
 Defined.
 
-Ltac bang :=
-  match goal with
-  | |- context [ False_rect _ ?h ] =>
-    exfalso ; exact h
-  end.
-
 Fact safe_nth_irr :
   forall {A n} {l : list A} {isdecl isdecl'},
     safe_nth l (exist _ n isdecl) =

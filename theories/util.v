@@ -9,6 +9,12 @@ Import List.ListNotations.
 Set Primitive Projections.
 Open Scope type_scope.
 
+Ltac bang :=
+  match goal with
+  | |- context [ False_rect _ ?h ] =>
+    exfalso ; exact h
+  end.
+
 Definition compute_eq {n m : nat} : n = m -> n = m :=
   match Nat.eq_dec n m with
   | left p => fun _ => p
@@ -109,12 +115,19 @@ Ltac split_hyps :=
   repeat split_hyp.
 
 Ltac splits_one h :=
-  match type of h with
-  | _ * _ => let h1 := fresh "h" in
-            let h2 := fresh "h" in
-            destruct h as [h1 h2] ;
-            splits_one h1 ;
-            splits_one h2
+  lazymatch type of h with
+  | _ * _ =>
+    let h1 := fresh "h" in
+    let h2 := fresh "h" in
+    destruct h as [h1 h2] ;
+    splits_one h1 ;
+    splits_one h2
+  | _ /\ _ =>
+    let h1 := fresh "h" in
+    let h2 := fresh "h" in
+    destruct h as [h1 h2] ;
+    splits_one h1 ;
+    splits_one h2
   | _ => idtac
   end.
 

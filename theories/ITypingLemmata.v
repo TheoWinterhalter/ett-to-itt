@@ -1,10 +1,11 @@
-From Coq Require Import Bool String List BinPos Compare_dec Lia.
+From Coq Require Import Bool String List BinPos Compare_dec Lia Arith.
 Require Import Equations.Prop.DepElim.
 From Equations Require Import Equations.
-From MetaCoq Require Import Ast utils Typing.
+From MetaCoq Require Import Ast utils Typing AstUtils.
 From Translation
 Require Import util SAst SLiftSubst SCommon Conversion
                ITyping ITypingInversions.
+Import ListNotations.
 
 (* Lemmata about typing *)
 
@@ -212,11 +213,11 @@ Proof.
   intro Σ. induction Σ ; intros id ty d h hf.
   - cbn in h. discriminate h.
   - cbn in h. dependent destruction hf.
-    case_eq (ident_eq id (dname d0)) ;
+    case_eq (ident_eq id (dname a)) ;
     intro e ; rewrite e in h.
     + inversion h as [ h' ]. subst. clear h.
       destruct (ident_eq_spec id (dname d)).
-      * subst. destruct (ident_eq_spec (dname d) (dname d0)).
+      * subst. destruct (ident_eq_spec (dname d) (dname a)).
         -- exfalso. easy.
         -- easy.
       * reflexivity.
@@ -962,7 +963,7 @@ Proof.
     + cbn in hn.
       rewrite rev_map_cons.
       rewrite nth_error_app1.
-      * erewrite IHl by eassumption. reflexivity.
+      * cbn. erewrite IHl by eassumption. reflexivity.
       * rewrite rev_map_length. cbn.
         assert (n < #|l|).
         { apply nth_error_Some. rewrite hn. discriminate. }

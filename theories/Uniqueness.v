@@ -1,12 +1,13 @@
 (* Uniqueness of Typing *)
 
-From Coq Require Import Bool String List BinPos Compare_dec Lia.
+From Coq Require Import Bool String List BinPos Compare_dec Lia Arith.
 Require Import Equations.Prop.DepElim.
 From Equations Require Import Equations.
 From MetaCoq Require Import Ast utils Typing.
 From Translation
 Require Import util SAst SLiftSubst Equality SCommon Conversion ITyping
                ITypingInversions ITypingLemmata ContextConversion.
+Import ListNotations.
 
 Section Uniqueness.
 
@@ -31,50 +32,50 @@ Proof.
   induction u ; intros Γ A B h1 h2.
   all: try unitac h1 h2. all: try assumption.
   - cbn in *. erewrite @safe_nth_irr with (isdecl' := is) in h0. assumption.
-  - specialize (IHu1 _ _ _ h h0).
-    specialize (IHu2 _ _ _ h4 h7).
-    eapply conv_trans ; try eapply h6.
+  - specialize (IHu1 _ _ _ h0 h5).
+    specialize (IHu2 _ _ _ h h3).
+    eapply conv_trans. 2: eapply h7.
     pose proof (sort_conv_inv IHu1) as e1.
     pose proof (sort_conv_inv IHu2) as e2.
     subst. apply conv_refl.
   - eapply nl_conv ; try eassumption ; reflexivity.
-  - specialize (IHu1 _ _ _ h h0).
-    specialize (IHu2 _ _ _ h4 h7).
-    eapply conv_trans ; try eapply h6.
+  - specialize (IHu1 _ _ _ h0 h5).
+    specialize (IHu2 _ _ _ h h3).
+    eapply conv_trans. 2: eapply h7.
     pose proof (sort_conv_inv IHu1) as e1.
     pose proof (sort_conv_inv IHu2) as e2.
     subst. apply conv_refl.
-  - eapply conv_trans ; [| exact h8 ].
+  - eapply conv_trans ; [| exact h11 ].
     apply cong_Sum ; apply conv_refl.
   - specialize (IHu1 _ _ _ h0 h6).
     pose proof (sort_conv_inv IHu1) as e. subst. assumption.
-  - specialize (IHu1 _ _ _ h h0).
+  - specialize (IHu1 _ _ _ h0 h7).
     pose proof (sort_conv_inv IHu1) as e. subst. assumption.
-  - specialize (IHu _ _ _ h h0).
+  - specialize (IHu _ _ _ h0 h7).
     pose proof (heq_conv_inv IHu) as e. split_hyps.
-    eapply conv_trans ; try exact h8.
+    eapply conv_trans. 2: exact h11.
     apply cong_Eq ; assumption.
-  - specialize (IHu _ _ _ h4 h10).
+  - specialize (IHu _ _ _ h5 h11).
     pose proof (heq_conv_inv IHu) as e. split_hyps.
-    eapply conv_trans ; [ | exact h9 ].
+    eapply conv_trans ; [ | exact h13 ].
     apply cong_Heq ; assumption.
-  - specialize (IHu1 _ _ _ h5 h14).
-    specialize (IHu2 _ _ _ h4 h13).
+  - specialize (IHu1 _ _ _ h7 h16).
+    specialize (IHu2 _ _ _ h8 h17).
     pose proof (heq_conv_inv IHu1) as e1.
     pose proof (heq_conv_inv IHu2) as e2. split_hyps.
-    eapply conv_trans ; [ | exact h12 ].
+    eapply conv_trans ; [ | exact h19 ].
     apply cong_Heq ; assumption.
   - specialize (IHu1 _ _ _ h4 h9).
-    specialize (IHu2 _ _ _ h5 h10).
+    specialize (IHu2 _ _ _ h3 h8).
     pose proof (eq_conv_inv IHu1) as e1. split_hyps.
-    eapply conv_trans ; [| exact h8 ].
+    eapply conv_trans ; [| exact h11 ].
     apply cong_Heq ; try assumption.
     + apply conv_refl.
     + apply cong_Transport ; try assumption.
       all: apply conv_refl.
-  - specialize (IHu3 _ _ _ h h0).
+  - specialize (IHu3 _ _ _ h0 h9).
     pose proof (heq_conv_inv IHu3) as e3. split_hyps.
-    pose proof (sort_conv_inv pi1_). subst.
+    pose proof (sort_conv_inv H). subst.
     assert (hh : Σ ;;; Γ,, A1 |-i u1 : sSort z0).
     { eapply type_ctxconv ; try eassumption.
       - econstructor ; try eassumption.
@@ -85,7 +86,7 @@ Proof.
     }
     specialize (IHu1 _ _ _ h5 hh).
     pose proof (sort_conv_inv IHu1). subst.
-    eapply conv_trans ; [| exact h10 ].
+    eapply conv_trans ; [| exact h15 ].
     apply cong_Heq.
     + apply conv_refl.
     + apply cong_Prod ; try assumption.
@@ -94,8 +95,8 @@ Proof.
     + apply cong_Prod ; try assumption. apply conv_refl.
   - specialize (IHu5 _ _ _ h0 h12).
     pose proof (heq_conv_inv IHu5) as e5. split_hyps.
-    pose proof (sort_conv_inv pi1_). subst.
-    eapply conv_trans ; [| exact h13 ].
+    pose proof (sort_conv_inv H). subst.
+    eapply conv_trans ; [| exact h21 ].
     apply cong_Heq ; try assumption.
     + apply cong_Prod ; try assumption. apply conv_refl.
     + apply cong_Lambda ; try assumption. all: apply conv_refl.

@@ -1,12 +1,13 @@
 (*! Meta-theory for ETT *)
 
-From Coq Require Import Bool String List BinPos Compare_dec PeanoNat.
+From Coq Require Import Bool String List BinPos Compare_dec PeanoNat Arith.
 Require Import Equations.Prop.DepElim.
 From Equations Require Import Equations.
-From MetaCoq Require Import Ast utils Typing.
+From MetaCoq Require Import Ast utils Typing AstUtils.
 From Translation
 Require Import util Sorts SAst SLiftSubst SCommon ITyping ITypingLemmata
                XTyping.
+Import ListNotations.
 
 Open Scope x_scope.
 
