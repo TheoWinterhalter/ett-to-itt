@@ -1,12 +1,14 @@
 (* Translation from our special ITT to TemplateCoq itself  *)
 
-From Coq Require Import Bool String List BinPos Compare_dec Omega.
-From Equations Require Import Equations DepElimDec.
-From Template
-Require Import config Ast utils monad_utils Typing Checker.
+From Coq Require Import Bool String List BinPos Compare_dec Lia Arith.
+Require Import Equations.Prop.DepElim.
+From Equations Require Import Equations.
+From MetaCoq
+Require Import config Ast utils monad_utils Typing Checker AstUtils.
 From Translation
 Require Import util Sorts SAst SLiftSubst SCommon ITyping Quotes.
 Import MonadNotation.
+Import ListNotations.
 
 (* Associative table indexed by strings *)
 Inductive assoc (A : Type) :=
@@ -64,26 +66,29 @@ Instance monad_exc : MonadExc tsl_error tsl_result :=
   }.
 
 (* For now, we'll let TemplateCoq deal with universes on its own. *)
-Definition sort_to_universe (s : sort) : Universe.t := [].
+Definition sort_to_universe (s : sort) : Universe.t := Universe.type0.
+(* Definition sort_to_universe (s : sort) : Universe.t := []. *)
   (* match s with *)
   (* | 0 => (* Universe.type0 *) [] *)
   (* | S n => [] *)
   (* end. *)
 
-Definition hnf (Σ : global_context) (Γ : context) (t : term) : typing_result term :=
+Existing Instance default_fuel.
+
+Definition hnf (Σ : global_env_ext) (Γ : context) (t : term) : typing_result term :=
   r <- hnf_stack (Datatypes.fst Σ) Γ t ;;
   ret (zip r).
 
-Definition myret (Σ : global_context) (Γ : context) (t : term) : tsl_result term :=
+Definition myret (Σ : global_env_ext) (Γ : context) (t : term) : tsl_result term :=
   Success t.
   (* match hnf Σ Γ t with *)
   (* | Checked t' => Success t' *)
   (* | _ => Error TranslationNotHandled *)
   (* end. *)
 
-Definition infer_hnf fuel Σ Γ t :=
+Definition infer_hnf (Σ : global_env_ext) Γ t :=
   (* infer (F := Build_Fuel fuel) Σ Γ t. *)
-  t' <- infer (F := Build_Fuel fuel) Σ Γ t ;;
+  t' <- infer (fst_ctx Σ) (Σ.2) Γ t ;;
   hnf Σ Γ t'.
 
 Fixpoint brs_repack (l : list (nat * tsl_result term)) :
@@ -100,7 +105,7 @@ Fixpoint brs_repack (l : list (nat * tsl_result term)) :
 
 Close Scope s_scope.
 
-Fixpoint tsl_rec (fuel : nat) (Σ : global_context) (Γ : context) (t : sterm)
+Fixpoint tsl_rec (fuel : nat) (Σ : global_env_ext) (Γ : context) (t : sterm)
          (axt : assoc term) {struct fuel}
   : tsl_result term :=
   match fuel with
@@ -414,7 +419,7 @@ Fixpoint tsl_rec (fuel : nat) (Σ : global_context) (Γ : context) (t : sterm)
 
 (* Delimit Scope i_scope with i. *)
 
-Fixpoint tsl_ctx (fuel : nat) (Σ : global_context) (Γ : scontext)
+Fixpoint tsl_ctx (fuel : nat) (Σ : global_env_ext) (Γ : scontext)
          (axt : assoc term)
   : tsl_result context :=
   match Γ with

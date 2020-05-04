@@ -1,8 +1,10 @@
-From Coq Require Import Bool String List BinPos Compare_dec Omega.
-From Equations Require Import Equations DepElimDec.
-From Template Require Import Ast utils Typing.
+From Coq Require Import Bool String List BinPos Compare_dec Lia Arith.
+Require Import Equations.Prop.DepElim.
+From Equations Require Import Equations.
+From MetaCoq Require Import Ast utils Typing.
 From Translation
 Require Import util SAst Equality SLiftSubst SCommon.
+Import ListNotations.
 
 Open Scope s_scope.
 
@@ -502,10 +504,12 @@ Section nlred.
    *)
   Definition nleq u v := nl u = nl v.
 
+  Derive NoConfusion NoConfusionHom for sterm.
+
   Ltac nlred :=
     lazymatch goal with
-    | h : ?t ▷ ?t', eq : nl ?t = _, ih : forall _, ?t ▷ _ -> _ |- _ =>
-      destruct (ih _ h _ eq) as [? [? ?]] ;
+    | h : ?t ▷ ?t', eq : nl ?t = _, ih : forall _ _, ?t ▷ _ -> _ |- _ =>
+      destruct (ih _ _ h eq) as [? [? ?]] ;
       eexists ; split ; [
         econstructor ; eassumption
       | unfold nleq ; cbn ; f_equal ; assumption
@@ -518,23 +522,23 @@ Section nlred.
       nleq t t' ->
       exists u', (t' ▷ u') /\ (nleq u u').
   Proof.
-    intros t t' u h. revert u h t'.
-    induction t.
-    all: intros u h ; dependent destruction h.
-    all: intros tt eq.
-    all: destruct tt ; unfold nleq in eq ; simpl in eq ; try discriminate eq.
+    intros t t' u h.
+    induction t in u, h, t' |- *.
+    all: dependent destruction h.
+    all: intros eq.
+    all: destruct t' ; unfold nleq in eq ; simpl in eq ; try discriminate eq.
     all: inversion eq ; try nlred.
-    - destruct tt1 ; simpl nl in H0 ; try discriminate H0.
+    - destruct t'1 ; simpl nl in H0 ; try discriminate H0.
       inversion H0.
       eexists. split.
       + eapply red_beta.
       + apply nl_subst ; easy.
-    - destruct tt6 ; simpl nl in H5 ; try discriminate H5.
+    - destruct t'6 ; simpl nl in H5 ; try discriminate H5.
       inversion H5.
       eexists. split.
       + eapply red_JRefl.
       + assumption.
-    - destruct tt3 ; simpl nl in H2 ; try discriminate H2.
+    - destruct t'3 ; simpl nl in H2 ; try discriminate H2.
       inversion H2.
       eexists. split.
       + eapply red_TransportRefl.
@@ -549,6 +553,8 @@ End nlred.
 Section Conv.
 
 Context `{Sort_notion : Sorts.notion}.
+
+Declare Scope i_scope.
 
 Reserved Notation " t ≡ u " (at level 50, u at next level).
 
@@ -1096,13 +1102,28 @@ Section conv_substs.
       let v := safe_nth b2 (exist _ n h2) in
       (fst u = fst v) * (snd u ≡ snd v).
   Proof.
-    intros b1 b2 n h1 h2 h. revert n h1 h2.
-    induction h.
-    - cbn. intros. bang.
-    - intros [| m] h1 h2 u' v'.
-      + cbn in *. split ; [ reflexivity | assumption ].
-      + cbn in u'. cbn in v'.
-        apply IHh.
+    intros b1 b2 n h1 h2 h.
+    simpl in h1, h2.
+    induction b1 in b2, n, h1, h2, h |- *.
+    - cbn in *. lia.
+    - destruct b2. 1: cbn in * ; lia.
+      destruct n.
+      + cbn in *. split.
+        * inversion h. reflexivity.
+        * inversion h. assumption.
+      + cbn in *.
+        lazymatch goal with
+        | |- context [ safe_nth b1 (exist _ _ ?h) ] =>
+          set (h1' := h)
+        end.
+        lazymatch goal with
+        | |- context [ safe_nth b2 (exist _ _ ?h) ] =>
+          set (h2' := h)
+        end.
+        specialize (IHb1 b2 n h1' h2').
+        forward IHb1.
+        { inversion h. assumption. }
+        intuition auto.
   Defined.
 
   Lemma substs_red1 (t : sterm) :
@@ -1173,6 +1194,12 @@ Ltac inversion_eq :=
   | H : _ = _ |- _ => inversion H
   end.
 
+Ltac split_hyp ::=
+  lazymatch goal with
+  | h : _ /\ _ |- _ => destruct h
+  | h : _ * _ |- _ => destruct h
+  end.
+
 Ltac invconv h :=
   dependent induction h ; [
     cbn in * ; inversion_eq ;
@@ -1192,9 +1219,9 @@ Context `{Sort_notion : Sorts.notion}.
 Lemma heq_conv_inv :
   forall {A a B b A' a' B' b'},
     sHeq A a B b ≡ sHeq A' a' B' b' ->
-    (A ≡ A') *
-    (a ≡ a') *
-    (B ≡ B') *
+    (A ≡ A') /\
+    (a ≡ a') /\
+    (B ≡ B') /\
     (b ≡ b').
 Proof.
   intros A a B b A' a' B' b' h.
@@ -1204,8 +1231,8 @@ Defined.
 Lemma eq_conv_inv :
   forall {A u v A' u' v'},
     sEq A u v ≡ sEq A' u' v' ->
-    (A ≡ A') *
-    (u ≡ u') *
+    (A ≡ A') /\
+    (u ≡ u') /\
     (v ≡ v').
 Proof.
   intros A u v A' u' v' h.
@@ -1215,7 +1242,7 @@ Defined.
 Lemma pack_conv_inv :
   forall {A1 A2 A1' A2'},
     sPack A1 A2 ≡ sPack A1' A2' ->
-    (A1 ≡ A1') * (A2 ≡ A2').
+    (A1 ≡ A1') /\ (A2 ≡ A2').
 Proof.
   intros A1 A2 A1' A2' h.
   invconv h.
@@ -1224,7 +1251,7 @@ Defined.
 Lemma prod_inv :
   forall {nx ny A B A' B'},
     sProd nx A B ≡ sProd ny A' B' ->
-    (A ≡ A') * (B ≡ B').
+    (A ≡ A') /\ (B ≡ B').
 Proof.
   intros nx ny A B A' B' h.
   invconv h.

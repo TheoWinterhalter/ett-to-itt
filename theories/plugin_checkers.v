@@ -3,9 +3,10 @@
 Require Import TypingFlags.Loader.
 Set Type In Type.
 
-From Coq Require Import Bool String List BinPos Compare_dec Omega.
-From Equations Require Import Equations DepElimDec.
-From Template Require Import All.
+From Coq Require Import Bool String List BinPos Compare_dec Lia.
+Require Import Equations.Prop.DepElim.
+From Equations Require Import Equations.
+From MetaCoq Require Import All.
 From Translation
 Require Import util Sorts SAst SLiftSubst SCommon ITyping ITypingLemmata
 ITypingAdmissible DecideConversion XTyping Quotes Translation FundamentalLemma
@@ -291,10 +292,10 @@ Proof.
     + reflexivity.
     + reflexivity.
   - cbn. case_eq (k <=? n) ; intro e ; bprop e.
-    + cbn. case_eq (k ?= S (S n)) ; intro e1 ; bprop e1 ; try myomega.
+    + cbn. case_eq (k ?= S (S n)) ; intro e1 ; bprop e1 ; try mylia.
       reflexivity.
-    + cbn. case_eq (k ?= S n) ; intro e1 ; bprop e1 ; try myomega.
-      * subst. f_equal. myomega.
+    + cbn. case_eq (k ?= S n) ; intro e1 ; bprop e1 ; try mylia.
+      * subst. f_equal. mylia.
       * reflexivity.
 Defined.
 
@@ -329,7 +330,7 @@ Proof.
         -- instantiate (1 := tt). assumption.
       * instantiate (1 := sRel 0).
         refine (@type_Rel Sorts.type_in_type _ _ 0 _).
-        cbn. myomega.
+        cbn. mylia.
     + eapply lift_rel.
 Defined.
 
@@ -528,7 +529,7 @@ Proof.
   - intros Σ i j Σ' hf hj. cbn. destruct j.
     + subst Σ'. rewrite extendi_comp.
       rewrite extendi_comp in hf. rewrite rev_mapi_cons in hf.
-      replace (i + 0) with i by myomega.
+      replace (i + 0) with i by mylia.
       match goal with
       | |- lookup_glob (?ob ++ ?d' :: _) ?na' = _ =>
         set (l := ob) in * ;
@@ -537,10 +538,10 @@ Proof.
       end.
       clear - hf. rewrite <- app_cons_app in hf. cbn.
       eapply lookup_skip. assumption.
-    + cbn. replace (i + S j) with (S i + j) by myomega.
+    + cbn. replace (i + S j) with (S i + j) by mylia.
       eapply ih.
       * assumption.
-      * cbn in hj. myomega.
+      * cbn in hj. mylia.
 Defined.
 
 Lemma lookup_extend :
@@ -554,10 +555,10 @@ Proof.
   erewrite (lookup_extendi (i := 0)).
   Transparent length.
   - rewrite nth_error_app2 by reflexivity.
-    replace (#|obb| - #|obb|) with 0 by myomega.
+    replace (#|obb| - #|obb|) with 0 by mylia.
     reflexivity.
   - assumption.
-  - rewrite app_length. cbn. myomega.
+  - rewrite app_length. cbn. mylia.
 Defined.
 
 Lemma xtype_glob_allfresh :

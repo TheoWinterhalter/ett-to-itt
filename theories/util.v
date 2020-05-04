@@ -1,8 +1,10 @@
 (* Utility *)
 
-From Coq Require Import Bool String List BinPos Compare_dec Omega ROmega.
-From Equations Require Import Equations DepElimDec.
-From Template Require Import utils Typing.
+From Coq Require Import Bool String List BinPos Compare_dec Lia Arith.
+Require Import Equations.Prop.DepElim.
+From Equations Require Import Equations.
+From MetaCoq Require Import utils Typing.
+Import List.ListNotations.
 
 Set Primitive Projections.
 Open Scope type_scope.
@@ -43,14 +45,14 @@ Definition compute_gt {n m} : n > m -> n > m :=
   | right nh => fun h => False_rect _ (nh h)
   end.
 
-Ltac myomega :=
+Ltac mylia :=
   match goal with
-  | |- @eq nat _ _ => eapply compute_eq ; abstract omega
-  | |- _ <= _ => eapply compute_le ; abstract omega
-  | |- _ < _ => eapply compute_lt ; abstract omega
-  | |- _ >= _ => eapply compute_ge ; abstract omega
-  | |- _ > _ => eapply compute_gt ; abstract omega
-  | _ => abstract omega
+  | |- @eq nat _ _ => eapply compute_eq ; abstract lia
+  | |- _ <= _ => eapply compute_le ; abstract lia
+  | |- _ < _ => eapply compute_lt ; abstract lia
+  | |- _ >= _ => eapply compute_ge ; abstract lia
+  | |- _ > _ => eapply compute_gt ; abstract lia
+  | _ => abstract lia
   end.
 
 Record pp_sigT {A : Type} (P : A -> Type) : Type :=
@@ -247,7 +249,7 @@ Tactic Notation "erewrite_assumption" "by" tactic(tac) :=
 
 Ltac ncase exp :=
   let e := fresh "e" in
-  case_eq exp ; intro e ; bprop e ; try myomega.
+  case_eq exp ; intro e ; bprop e ; try mylia.
 
 Ltac nat_case :=
   match goal with
@@ -259,7 +261,7 @@ Ltac nat_case :=
 
 Tactic Notation "hyp" "rewrite" :=
   match goal with
-  | H : _ |- _ => rewrite H by myomega
+  | H : _ |- _ => rewrite H by mylia
   end.
 
 
@@ -337,7 +339,7 @@ Fact lastn_O :
   forall {A} {l : list A}, lastn 0 l = [].
 Proof.
   intros A l. unfold lastn.
-  replace (#|l| - 0) with #|l| by myomega.
+  replace (#|l| - 0) with #|l| by mylia.
   apply skipn_all.
 Defined.
 
@@ -346,7 +348,7 @@ Fact lastn_all :
     lastn #|l| l = l.
 Proof.
   intros A l. unfold lastn.
-  replace (#|l| - #|l|) with 0 by myomega.
+  replace (#|l| - #|l|) with 0 by mylia.
   reflexivity.
 Defined.
 
@@ -357,7 +359,7 @@ Fact lastn_all2 :
 Proof.
   intros A n l h.
   unfold lastn.
-  replace (#|l| - n) with 0 by myomega.
+  replace (#|l| - n) with 0 by mylia.
   reflexivity.
 Defined.
 
@@ -370,7 +372,7 @@ Proof.
   intros A l n a hn h.
   unfold lastn.
   erewrite skipn_reconstruct.
-  - f_equal. f_equal. myomega.
+  - f_equal. f_equal. mylia.
   - assumption.
 Defined.
 
@@ -414,8 +416,8 @@ Proof.
   induction n.
   - intros _. assumption.
   - intro h. apply Ps.
-    + myomega.
-    + apply IHn. myomega.
+    + mylia.
+    + apply IHn. mylia.
 Defined.
 
 Corollary fin_indT_last :

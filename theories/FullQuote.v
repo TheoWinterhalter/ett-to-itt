@@ -1,8 +1,9 @@
-(* Partial translation from TemplateCoq to ITT *)
+(* Partial translation From MetaCoqCoq to ITT *)
 
-From Coq Require Import Bool String List BinPos Compare_dec Omega.
-From Equations Require Import Equations DepElimDec.
-From Template
+From Coq Require Import Bool String List BinPos Compare_dec Lia.
+Require Import Equations.Prop.DepElim.
+From Equations Require Import Equations.
+From MetaCoq
 Require Import Ast utils monad_utils Typing Checker.
 From Translation
 Require Import util Sorts SAst SLiftSubst SCommon ITyping Quotes

@@ -1,8 +1,10 @@
-From Coq Require Import Bool String List BinPos Compare_dec Omega.
-From Equations Require Import Equations DepElimDec.
-From Template Require Import Ast utils Typing.
+From Coq Require Import Bool String List BinPos Compare_dec Lia Arith.
+Require Import Equations.Prop.DepElim.
+From Equations Require Import Equations.
+From MetaCoq Require Import Ast utils Typing AstUtils.
 From Translation Require Import util SAst SLiftSubst.
 From Translation Require Sorts.
+Import ListNotations.
 
 Section Common.
 
@@ -56,9 +58,9 @@ Proof.
 Defined.
 
 Fact length_cat :
-  forall {A} {Γ Δ : list A}, #|Γ ++ Δ| = (#|Γ| + #|Δ|)%nat.
+  forall {Γ Δ}, #|Δ ,,, Γ| = (#|Γ| + #|Δ|)%nat.
 Proof.
-  intros A Γ. induction Γ ; intro Δ.
+  intros Γ. induction Γ ; intro Δ.
   - cbn. reflexivity.
   - cbn. f_equal. apply IHΓ.
 Defined.
@@ -101,6 +103,12 @@ Proof.
   apply eq_safe_nth'.
 Defined.
 
+Ltac bang :=
+  match goal with
+  | |- context [ False_rect _ ?h ] =>
+    exfalso ; exact h
+  end.
+
 Fact safe_nth_irr :
   forall {A n} {l : list A} {isdecl isdecl'},
     safe_nth l (exist _ n isdecl) =
@@ -133,18 +141,18 @@ Proof.
   intros Γ Δ.
   induction Δ ; intros n isdecl isdecl' h.
   - cbn in *. revert isdecl'.
-    replace (n - 0) with n by myomega.
+    replace (n - 0) with n by mylia.
     intros isdecl'. apply safe_nth_irr.
   - destruct n.
     + cbn in *. inversion h.
-    + cbn. apply IHΔ. cbn in *. myomega.
+    + cbn. apply IHΔ. cbn in *. mylia.
 Defined.
 
 Definition ge_sub {Γ Δ n} (isdecl : n < #|Γ ,,, Δ|) :
   n >= #|Δ| ->  n - #|Δ| < #|Γ|.
 Proof.
   intro h.
-  rewrite length_cat in isdecl. myomega.
+  rewrite length_cat in isdecl. mylia.
 Defined.
 
 Fact safe_nth_ge' :
@@ -218,7 +226,7 @@ Proof.
   intros Γ Δ. induction Δ.
   - cbn. intros. bang.
   - intro n. destruct n ; intros isdecl isdecl'.
-    + cbn. replace (#|Δ| - 0) with #|Δ| by myomega. reflexivity.
+    + cbn. replace (#|Δ| - 0) with #|Δ| by mylia. reflexivity.
     + cbn. erewrite IHΔ. reflexivity.
 Defined.
 
@@ -229,7 +237,7 @@ Fact lift_context_ex :
 Proof.
   intros Δ Ξ n isdecl isdecl'.
   erewrite safe_nth_lift_context.
-  rewrite <- liftP2 by myomega.
+  rewrite <- liftP2 by mylia.
   cbn.
   replace (S (n + (#|Ξ| - n - 1)))%nat with #|Ξ|.
   - reflexivity.
@@ -237,10 +245,10 @@ Proof.
     + cbn. exfalso. abstract easy.
     + cbn. f_equal.
       destruct n.
-      * cbn. myomega.
+      * cbn. mylia.
       * cbn. apply IHΞ.
-        -- cbn in *. myomega.
-        -- cbn in *. myomega.
+        -- cbn in *. mylia.
+        -- cbn in *. mylia.
 Defined.
 
 (* Substitution in context *)
@@ -268,7 +276,7 @@ Proof.
   intro Δ. induction Δ.
   - cbn. intros. bang.
   - intro n. destruct n ; intros u isdecl isdecl'.
-    + cbn. replace (#|Δ| - 0) with #|Δ| by myomega. reflexivity.
+    + cbn. replace (#|Δ| - 0) with #|Δ| by mylia. reflexivity.
     + cbn. erewrite IHΔ. reflexivity.
 Defined.
 

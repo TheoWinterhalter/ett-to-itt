@@ -1,6 +1,7 @@
-From Coq Require Import Bool String List BinPos Compare_dec Omega.
-From Equations Require Import Equations DepElimDec.
-From Template Require Import Ast utils Typing.
+From Coq Require Import Bool String List BinPos Compare_dec Lia.
+Require Import Equations.Prop.DepElim.
+From Equations Require Import Equations.
+From MetaCoq Require Import Ast utils Typing.
 From Translation
 Require Import util Sorts SAst SLiftSubst Equality SCommon XTyping Conversion ITyping
                ITypingInversions ITypingLemmata ITypingAdmissible Optim
@@ -254,7 +255,7 @@ Proof.
       exists (sProjTe (sRel x)).
       intros Γm U1 U2 hm h1 h2.
       unfold llift at 2. unfold rlift at 2.
-      case_eq (x <? 0) ; intro e ; bprop e ; try myomega. clear e2.
+      case_eq (x <? 0) ; intro e ; bprop e ; try mylia. clear e2.
       pose proof (mix_length1 hm) as ml. rewrite <- ml in e0, e1.
       change (0 + #|Γm|)%nat with #|Γm|.
       rewrite e0.
@@ -296,10 +297,10 @@ Proof.
       * erewrite safe_nth_lt. erewrite safe_nth_mix by eassumption.
         cbn. apply cong_Pack.
         -- rewrite lift_llift.
-           replace (S x + (#|Γm| - S x))%nat with #|Γm| by myomega.
+           replace (S x + (#|Γm| - S x))%nat with #|Γm| by mylia.
            eapply llift_conv. eassumption.
         -- rewrite lift_rlift.
-           replace (S x + (#|Γm| - S x))%nat with #|Γm| by myomega.
+           replace (S x + (#|Γm| - S x))%nat with #|Γm| by mylia.
            eapply rlift_conv. eassumption.
     + (* Unless it is ill-typed, the variable is in Γ, reflexivity will do.
          To type reflexivity properly we still need a proof that
@@ -312,7 +313,7 @@ Proof.
         exists (sHeqRefl A (sRel x)).
         intros Γm U1 U2 hm h1 h2.
         unfold llift at 2. unfold rlift at 2.
-        case_eq (x <? 0) ; intro e ; bprop e ; try myomega. clear e2.
+        case_eq (x <? 0) ; intro e ; bprop e ; try mylia. clear e2.
         pose proof (mix_length1 hm) as ml. rewrite <- ml in e0, e1.
         change (0 + #|Γm|)%nat with #|Γm|.
         rewrite e0.
@@ -335,7 +336,7 @@ Proof.
            subst y A. revert isdecl0. rewrite <- ml. intro isdecl0.
            eapply meta_conv.
            ++ eapply type_Rel. eapply typing_wf. eassumption.
-           ++ erewrite @safe_nth_ge with (isdecl' := isdecl0) by myomega.
+           ++ erewrite @safe_nth_ge with (isdecl' := isdecl0) by mylia.
               reflexivity.
         -- eapply type_Heq ; try eassumption.
            eapply type_conv ; try eassumption.
@@ -346,19 +347,19 @@ Proof.
            ++ eapply conv_trans ; try eassumption.
               subst y A. revert isdecl0. rewrite <- ml. intro isdecl0.
               apply conv_eq. f_equal. f_equal.
-              erewrite @safe_nth_ge with (isdecl' := isdecl0) by myomega.
+              erewrite @safe_nth_ge with (isdecl' := isdecl0) by mylia.
               reflexivity.
            ++ eapply conv_trans ; try eassumption.
               subst y A. revert isdecl0. rewrite <- ml. intro isdecl0.
               apply conv_eq. f_equal. f_equal.
-              erewrite @safe_nth_ge with (isdecl' := isdecl0) by myomega.
+              erewrite @safe_nth_ge with (isdecl' := isdecl0) by mylia.
               reflexivity.
       * (* In case the variable isn't in the context at all,
            it is bound to be ill-typed and we can return garbage.
          *)
         exists (sRel 0).
         intros Γm U1 U2 hm h1 h2.
-        exfalso. ttinv h1. clear h. rewrite length_cat in is. myomega.
+        exfalso. ttinv h1. clear h. rewrite length_cat in is. mylia.
 
   (* Left transport *)
   - destruct (IHsim Γ Γ1 Γ2) as [q hq].
@@ -815,7 +816,7 @@ Proof.
       * rewrite llift_substProj, rlift_substProj.
         apply hpB.
       * apply hpu.
-      * replace 0 with (0 + 0)%nat in hpv by myomega.
+      * replace 0 with (0 + 0)%nat in hpv by mylia.
         rewrite llift_subst, rlift_subst in hpv.
         apply hpv.
       * lift_sort. eapply (@type_llift1 Sort_notion) ; eassumption.
@@ -1091,7 +1092,7 @@ Proof.
       rewrite h0 in neq. discriminate neq.
 
   Unshelve.
-  all: cbn ; try rewrite !length_cat ; myomega.
+  all: cbn ; try rewrite !length_cat ; mylia.
 Defined.
 
 Corollary trel_to_heq :

@@ -1,6 +1,6 @@
 (* This file illustrates the use of the plugin from ett to itt on examples. *)
 
-From Template Require Import All.
+From MetaCoq Require Import All.
 From Translation Require Import Quotes plugin.
 Import MonadNotation.
 

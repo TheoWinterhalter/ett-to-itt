@@ -1,6 +1,7 @@
-From Coq Require Import Bool String List BinPos Compare_dec Omega.
-From Equations Require Import Equations DepElimDec.
-From Template Require Import Ast.
+From Coq Require Import Bool String List BinPos Compare_dec Lia Arith.
+Require Import Equations.Prop.DepElim.
+From Equations Require Import Equations.
+From MetaCoq Require Import Ast.
 From Translation Require Import util SAst.
 From Translation Require Sorts.
 
@@ -144,6 +145,8 @@ Fixpoint subst `{Sort_notion : Sorts.notion} t k u :=
   | sAx id => sAx id
   end.
 
+Declare Scope s_scope.
+
 Notation subst0 t u := (subst t 0 u).
 Notation "M { j := N }" := (subst N j M) (at level 10, right associativity) : s_scope.
 
@@ -158,7 +161,7 @@ Definition substl l t :=
   List.fold_left (fun t u => subst0 u t) l t.
 
 (* Notion of closedness *)
-Fixpoint closed_above k t :=
+Fixpoint closed_above k (t : sterm) :=
   match t with
   | sRel n => n <? k
   | sSort _ => true
@@ -251,7 +254,7 @@ Proof.
   all: try (cbn ; f_equal ; hyp rewrite ; reflexivity).
   cbn. nat_case.
   - cbn. nat_case.
-    f_equal. myomega.
+    f_equal. mylia.
   - cbn. rewrite e. reflexivity.
 Defined.
 
@@ -262,13 +265,13 @@ Proof.
   induction t ; intros i j k.
   all: try (cbn ; f_equal ; hyp rewrite ; reflexivity).
   all: try (cbn ; f_equal ;
-            try replace (S (S (S (j+i))))%nat with (j + (S (S (S i))))%nat by myomega ;
-            try replace (S (S (j+i)))%nat with (j + (S (S i)))%nat by myomega ;
-            try replace (S (j+i))%nat with (j + (S i))%nat by myomega ;
+            try replace (S (S (S (j+i))))%nat with (j + (S (S (S i))))%nat by mylia ;
+            try replace (S (S (j+i)))%nat with (j + (S (S i)))%nat by mylia ;
+            try replace (S (j+i))%nat with (j + (S i))%nat by mylia ;
             hyp rewrite ; reflexivity).
   cbn. nat_case.
   - cbn. nat_case.
-    f_equal. myomega.
+    f_equal. mylia.
   - cbn. nat_case.
     reflexivity.
 Defined.
@@ -282,14 +285,14 @@ Proof.
   induction t ; intros i j k m H.
   all: try (cbn ; f_equal ; hyp rewrite ; reflexivity).
   all: try (cbn ; f_equal ;
-            try replace (S (S (S (j + m))))%nat with (j + (S (S (S m))))%nat by myomega ;
-            try replace (S (S (j + m)))%nat with (j + (S (S m)))%nat by myomega ;
-            try replace (S (j + m))%nat with (j + (S m))%nat by myomega ;
+            try replace (S (S (S (j + m))))%nat with (j + (S (S (S m))))%nat by mylia ;
+            try replace (S (S (j + m)))%nat with (j + (S (S m)))%nat by mylia ;
+            try replace (S (j + m))%nat with (j + (S m))%nat by mylia ;
             hyp rewrite ; reflexivity).
   cbn. nat_case.
   - nat_case.
     + cbn. nat_case. nat_case.
-      f_equal. myomega.
+      f_equal. mylia.
     + cbn. nat_case. nat_case.
       reflexivity.
   - cbn. nat_case. nat_case.
@@ -329,7 +332,7 @@ Proof.
   intro t. induction t ; intros i k j m ilk kl.
   all: try (cbn ; f_equal ; hyp rewrite ; reflexivity).
   cbn. nat_case.
-  - cbn. nat_case. f_equal. myomega.
+  - cbn. nat_case. f_equal. mylia.
   - cbn. nat_case. reflexivity.
 Defined.
 
@@ -339,15 +342,15 @@ Lemma substP1 :
 Proof.
   intro t. induction t ; intros u i j k.
   all: try (cbn ; f_equal ;
-            try replace (S (S (S (j + i)))) with ((S (S (S j))) + i)%nat by myomega ;
-            try replace (S (S (j + i))) with ((S (S j)) + i)%nat by myomega ;
-            try replace (S (j + i)) with ((S j) + i)%nat by myomega ;
+            try replace (S (S (S (j + i)))) with ((S (S (S j))) + i)%nat by mylia ;
+            try replace (S (S (j + i))) with ((S (S j)) + i)%nat by mylia ;
+            try replace (S (j + i)) with ((S j) + i)%nat by mylia ;
             hyp rewrite ; reflexivity).
   cbn - [Nat.leb]. nat_case.
   - cbn. nat_case. cbn. nat_case.
-    nat_case. f_equal. myomega.
+    nat_case. f_equal. mylia.
   - cbn. nat_case.
-    + subst. apply liftP2. myomega.
+    + subst. apply liftP2. mylia.
     + cbn. nat_case. reflexivity.
     + cbn. nat_case. reflexivity.
 Defined.
@@ -360,14 +363,14 @@ Proof.
   intros t.
   induction t ; intros u i j m h.
   all: try (cbn ; f_equal ;
-            try replace (S (S (S (j + m))))%nat with (j + (S (S (S m))))%nat by myomega ;
-            try replace (S (S (j + m)))%nat with (j + (S (S m)))%nat by myomega ;
-            try replace (S (j + m))%nat with (j + (S m))%nat by myomega ;
+            try replace (S (S (S (j + m))))%nat with (j + (S (S (S m))))%nat by mylia ;
+            try replace (S (S (j + m)))%nat with (j + (S (S m)))%nat by mylia ;
+            try replace (S (j + m))%nat with (j + (S m))%nat by mylia ;
             hyp rewrite ; reflexivity).
   cbn. nat_case.
   - cbn. nat_case.
-    + nat_case. subst. rewrite liftP3 by myomega. reflexivity.
-    + nat_case. cbn. nat_case. f_equal. myomega.
+    + nat_case. subst. rewrite liftP3 by mylia. reflexivity.
+    + nat_case. cbn. nat_case. f_equal. mylia.
     + nat_case. cbn. nat_case. reflexivity.
   - cbn. nat_case. nat_case. cbn. nat_case. reflexivity.
 Defined.
@@ -380,9 +383,9 @@ Lemma substP3 :
 Proof.
   intro t. induction t ; intros u i k m ilk kls.
   all: try (cbn ; f_equal ;
-            try replace (S (S (S (j + m))))%nat with (j + (S (S (S m))))%nat by myomega ;
-            try replace (S (S (j + m)))%nat with (j + (S (S m)))%nat by myomega ;
-            try replace (S (j + m))%nat with (j + (S m))%nat by myomega ;
+            try replace (S (S (S (j + m))))%nat with (j + (S (S (S m))))%nat by mylia ;
+            try replace (S (S (j + m)))%nat with (j + (S (S m)))%nat by mylia ;
+            try replace (S (j + m))%nat with (j + (S m))%nat by mylia ;
             hyp rewrite ; reflexivity).
   cbn. nat_case.
   - cbn. nat_case. reflexivity.
@@ -395,16 +398,16 @@ Lemma substP4 :
 Proof.
   intro t ; induction t ; intros u v i j.
   all: try (cbn ; f_equal ;
-            try replace (S (S (S (i + j))))%nat with ((S (S (S i))) + j)%nat by myomega ;
-            try replace (S (S (i + j)))%nat with ((S (S i)) + j)%nat by myomega ;
-            try replace (S (i + j))%nat with ((S i) + j)%nat by myomega ;
+            try replace (S (S (S (i + j))))%nat with ((S (S (S i))) + j)%nat by mylia ;
+            try replace (S (S (i + j)))%nat with ((S (S i)) + j)%nat by mylia ;
+            try replace (S (i + j))%nat with ((S i) + j)%nat by mylia ;
             hyp rewrite ; reflexivity
            ).
   cbn - [Nat.compare]. nat_case.
   - subst. nat_case. cbn. nat_case.
-    rewrite substP2 by myomega. reflexivity.
+    rewrite substP2 by mylia. reflexivity.
   - cbn - [Nat.compare]. nat_case.
-    + nat_case. rewrite substP3 by myomega. reflexivity.
+    + nat_case. rewrite substP3 by mylia. reflexivity.
     + nat_case. cbn. nat_case. reflexivity.
     + nat_case. cbn. nat_case. reflexivity.
   - cbn - [Nat.compare]. nat_case.
@@ -414,7 +417,7 @@ Defined.
 Ltac erewrite_close_above_lift :=
   match goal with
   | H : forall n k l, k <= l -> _ = _ |- _ =>
-    erewrite H by myomega
+    erewrite H by mylia
   end.
 
 Lemma closed_above_lift :
@@ -425,8 +428,8 @@ Lemma closed_above_lift :
 Proof.
   intro t. induction t ; intros m k l h.
   all: try (cbn ;
-            try replace (S (S (m+l)))%nat with (m + S (S l))%nat by myomega ;
-            try replace (S (m+l))%nat with (m + S l)%nat by myomega ;
+            try replace (S (S (m+l)))%nat with (m + S (S l))%nat by mylia ;
+            try replace (S (m+l))%nat with (m + S l)%nat by mylia ;
             repeat erewrite_close_above_lift ;
             reflexivity).
   unfold lift. nat_case.
@@ -440,7 +443,7 @@ Defined.
 Ltac erewrite_close_above_lift_id :=
   match goal with
   | H : forall n k l, _ -> k >= l -> _ = _ |- _ =>
-    erewrite H by (first [ eassumption | myomega ])
+    erewrite H by (first [ eassumption | mylia ])
   end.
 
 Fact closed_above_lift_id :
@@ -466,13 +469,13 @@ Proof.
   unfold closed in h.
   eapply closed_above_lift_id.
   - eassumption.
-  - myomega.
+  - mylia.
 Defined.
 
 Ltac erewrite_close_above_subst :=
   match goal with
   | H : forall u l n, _ -> _ -> _ -> _ = _ |- _ =>
-    erewrite H by (myomega || reflexivity || assumption)
+    erewrite H by (mylia || reflexivity || assumption)
   end.
 
 Lemma closed_above_subst :
@@ -487,8 +490,8 @@ Proof.
             repeat erewrite_close_above_subst ; reflexivity).
   unfold closed_above in h1. bprop h1.
   cbn. nat_case.
-  + subst. replace l with (n + (l - n))%nat by myomega.
-    rewrite closed_above_lift by myomega. assumption.
+  + subst. replace l with (n + (l - n))%nat by mylia.
+    rewrite closed_above_lift by mylia. assumption.
   + unfold closed_above. nat_case. reflexivity.
   + unfold closed_above. nat_case. reflexivity.
 Defined.
@@ -496,7 +499,7 @@ Defined.
 Ltac erewrite_close_above_subst_id :=
   match goal with
   | H : forall n l u, _ -> _ -> _ = _ |- _ =>
-    erewrite H by (first [ eassumption | myomega ])
+    erewrite H by (first [ eassumption | mylia ])
   end.
 
 Fact closed_above_subst_id :
@@ -522,7 +525,7 @@ Proof.
   unfold closed in h.
   eapply closed_above_subst_id.
   - eassumption.
-  - myomega.
+  - mylia.
 Defined.
 
 End LiftSubst.
@@ -532,23 +535,23 @@ End LiftSubst.
 Ltac erewrite_close_above_lift :=
   match goal with
   | H : forall n k l, k <= l -> _ = _ |- _ =>
-    erewrite H by myomega
+    erewrite H by mylia
   end.
 
 Ltac erewrite_close_above_lift_id :=
   match goal with
   | H : forall n k l, _ -> k >= l -> _ = _ |- _ =>
-    erewrite H by (first [ eassumption | myomega ])
+    erewrite H by (first [ eassumption | mylia ])
   end.
 
 Ltac erewrite_close_above_subst :=
   match goal with
   | H : forall u l n, _ -> _ -> _ -> _ = _ |- _ =>
-    erewrite H by (myomega || eassumption)
+    erewrite H by (mylia || eassumption)
   end.
 
 Ltac erewrite_close_above_subst_id :=
   match goal with
   | H : forall n l u, _ -> _ -> _ = _ |- _ =>
-    erewrite H by (first [ eassumption | myomega ])
+    erewrite H by (first [ eassumption | mylia ])
   end.

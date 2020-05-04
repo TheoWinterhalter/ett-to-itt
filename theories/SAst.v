@@ -1,6 +1,6 @@
 (*! Common syntax to ITT and ETT *)
 
-From Template Require Import Ast.
+From MetaCoq Require Import Ast.
 From Translation Require Import util Sorts.
 
 Section Ast.
