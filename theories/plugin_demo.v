@@ -3,6 +3,11 @@
 From MetaCoq Require Import All.
 From Translation Require Import Quotes plugin.
 Import MonadNotation.
+From Coq Require Import String.
+
+Unset Universe Checking.
+
+Open Scope string_scope.
 
 (*! EXAMPLE 1 *)
 (*

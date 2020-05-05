@@ -1,9 +1,8 @@
 (* Type checkers for ETT and ITT to be used by the plugin *)
 
-Require Import TypingFlags.Loader.
-Set Type In Type.
+Unset Universe Checking.
 
-From Coq Require Import Bool String List BinPos Compare_dec Lia.
+From Coq Require Import Bool String List BinPos Compare_dec Lia Arith.
 Require Import Equations.Prop.DepElim.
 From Equations Require Import Equations.
 From MetaCoq Require Import All.
@@ -13,6 +12,7 @@ ITypingAdmissible DecideConversion XTyping Quotes Translation FundamentalLemma
 FinalTranslation FullQuote XTypingLemmata IChecking
 XChecking Equality plugin_util.
 Import MonadNotation.
+Import ListNotations.
 
 Open Scope string_scope.
 Open Scope x_scope.
@@ -504,14 +504,14 @@ Lemma lookup_skip :
     lookup_glob Σ' na = Some A.
 Proof.
   intros Σ na A l d Σ' hf.
-  revert Σ na A d Σ' hf. induction l as [| B l ih ].
-  - intros Σ na A d Σ' hf. cbn.
+  induction l as [| B l ih ] in Σ, na, A, d, Σ', hf |- *.
+  - cbn.
     destruct (ident_eq_spec na na).
     + reflexivity.
     + exfalso. auto.
-  - intros Σ na A d Σ' hf. cbn.
+  - cbn.
     subst Σ'. cbn in hf. dependent destruction hf.
-    specialize (ih _ _ _ hf). rewrite ih.
+    specialize (ih _ _ _ hf). subst d. rewrite ih.
     erewrite ident_neq_fresh ; try eassumption.
     reflexivity.
 Defined.
@@ -552,7 +552,8 @@ Lemma lookup_extend :
 Proof.
   intros Σ name A obb obe Σ' hf.
   Opaque length.
-  erewrite (lookup_extendi (i := 0)).
+  change #|obb| with (0 + #|obb|). subst Σ'.
+  erewrite lookup_extendi.
   Transparent length.
   - rewrite nth_error_app2 by reflexivity.
     replace (#|obb| - #|obb|) with 0 by mylia.
@@ -602,11 +603,14 @@ Ltac reset H :=
   let v := (eval unfold H in H) in
   subst H ; set (H := v) in *.
 
-Ltac discharge :=
+(* Ltac discharge :=
   try (intros ;
   match goal with
   | H : None = Some _ |- _ => discriminate H
-  end).
+  end). *)
+
+Ltac discharge :=
+  try (intros ; discriminate).
 
 Ltac rewenv Σ H :=
   match type of H with
@@ -632,7 +636,7 @@ Proof with discharge.
   all: try discriminate h.
   - cbn in h. revert h. case_eq (nth_error Γ n).
     + intros B eq.
-      unfold ettconv. case_eq (eq_term (lift0 (S n) B) A).
+      unfold ettconv. cbn. case_eq (eq_term (lift0 (S n) B) A).
       * intros eq' h. eapply type_conv.
         -- eapply type_Rel.
         -- eassumption.
@@ -1190,7 +1194,7 @@ Proof with discharge.
         apply xtype_glob_allfresh. assumption.
   - simpl in h. revert h.
     case_eq (lookup_glob Σ id) ...
-    intros B eq. unfold ettconv.
+    intros B eq. cbn. unfold ettconv.
     match goal with
     | |- context [ eq_term ?u ?v ] => case_eq (eq_term u v)
     end.
@@ -1200,7 +1204,7 @@ Proof with discharge.
         rewrite extendi_comp. intros Σ' hg hw hA.
         match goal with
         | _ := ?x ++ _ |- _ => set (Ξ := x) in *
-        end. erewrite lookup_skip_eq ; try eassumption.
+        end. subst Σ'. erewrite lookup_skip_eq ; try eassumption.
         -- reflexivity.
         -- apply xtype_glob_allfresh. assumption.
       * eassumption.
@@ -1213,7 +1217,7 @@ Proof with discharge.
         rewrite extendi_comp. intros Σ' hg hw hA.
         match goal with
         | _ := ?x ++ _ |- _ => set (Ξ := x) in *
-        end. erewrite lookup_skip_eq ; try eassumption.
+        end. subst Σ'. erewrite lookup_skip_eq ; try eassumption.
         -- reflexivity.
         -- apply xtype_glob_allfresh. assumption.
       * eassumption.
@@ -1301,7 +1305,6 @@ Proof with discharge.
   intro Σ. induction Σ as [| d Σ ih ] ; intros eq hf.
   - constructor.
   - dependent destruction hf.
-    rename Σ0 into Σ, d0 into d.
     revert eq. unfold ettcheck_ctx.
     case_eq (ettcheck Σ [] (dtype d) Ty) ... intros ob eq.
     destruct ob ... intro h.
@@ -1314,7 +1317,7 @@ Proof with discharge.
       * cbn. eapply ih ; assumption.
 Defined.
 
-Fixpoint isxcomp t :=
+Fixpoint isxcomp (t : sterm) :=
   match t with
   | sRel n => true
   | sSort s => true
@@ -1358,7 +1361,6 @@ Proof with discharge.
   intros fuel Σ. induction Σ as [| d Σ ih ] ; intros eq hf.
   - constructor.
   - dependent destruction hf.
-    rename Σ0 into Σ, d0 into d.
     revert eq. unfold ittcheck_ctx.
     case_eq (isxcomp (dtype d)) ... intro e. cbn.
     case_eq (ittcheck fuel Σ [] (dtype d) Ty) ... cbn.

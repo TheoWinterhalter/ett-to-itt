@@ -1,6 +1,6 @@
 (*! General utilities to build ETT derivations *)
 
-From Coq Require Import Bool String List BinPos Compare_dec Lia.
+From Coq Require Import Bool String List BinPos Compare_dec Lia Arith.
 Require Import Equations.Prop.DepElim.
 From Equations Require Import Equations.
 From MetaCoq Require Import utils Ast Typing Checker.
@@ -8,6 +8,7 @@ From Translation Require Import util Quotes Sorts SAst SLiftSubst SCommon
      ITyping ITypingInversions ITypingLemmata ITypingAdmissible XTyping
      FundamentalLemma Translation FinalTranslation FullQuote
      IChecking XTypingLemmata XInversions.
+Import ListNotations.
 
 (* For efficiency reasons we use type in type for examples. *)
 Existing Instance Sorts.type_in_type.
