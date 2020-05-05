@@ -7,6 +7,9 @@
 - [Installing](#installing)
 - [Structure](#structure-of-the-project)
 
+A translation to weak type theory instead of ITT can be found in the
+[weak branch](https://github.com/TheoWinterhalter/ett-to-itt/tree/weak).
+
 ## Overview
 
 This work is a Coq formalisation of a translation from ETT to ITT that can
@@ -115,15 +118,11 @@ vec_rect A
 
 ### Requirements
 
-This project can be compiled with Coq 8.8.1 and requires
-[Equations](http://mattam82.github.io/Coq-Equations/) (version `1.1+8.8`)
+This project can be compiled with Coq 8.11 and requires
+[Equations](http://mattam82.github.io/Coq-Equations/)
 and
-[MetaCoq](https://github.com/MetaCoq/metacoq/releases/tag/v2.1-beta3).
-
-*Note: If you have trouble installing MetaCoq v2.1-beta3, have a look at [this fix](https://github.com/MetaCoq/metacoq/issues/77#issuecomment-439006141).*
-
-If you want to compile the examples, you also need
-[TypingFlags](https://github.com/SimonBoulier/TypingFlags).
+[MetaCoq](https://github.com/MetaCoq/metacoq).
+These can be installed via opam.
 
 ### Building
 
