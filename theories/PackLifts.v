@@ -1,11 +1,13 @@
 (* Lifts for packing *)
 
-From Coq Require Import Bool String List BinPos Compare_dec Omega.
-From Equations Require Import Equations DepElimDec.
-From Template Require Import Ast utils Typing.
+From Coq Require Import Bool String List BinPos Compare_dec Lia Arith.
+Require Import Equations.Prop.DepElim.
+From Equations Require Import Equations.
+From MetaCoq Require Import Ast utils Typing.
 From Translation
 Require Import util Sorts SAst SLiftSubst Equality SCommon XTyping
                Conversion ITyping ITypingLemmata ITypingAdmissible.
+Import ListNotations.
 
 Section Pack.
 
@@ -222,7 +224,7 @@ Proof.
   dependent induction hm.
   - cbn. easy.
   - intro n. destruct n ; intros isdecl isdecl1 isdecl2.
-    + cbn. replace (#|Γm| - 0) with #|Γm| by myomega. reflexivity.
+    + cbn. replace (#|Γm| - 0) with #|Γm| by mylia. reflexivity.
     + cbn. erewrite IHhm. reflexivity.
 Defined.
 
@@ -237,7 +239,7 @@ Proof.
   + intros m h. case_eq (n <=? m).
     * intro. reflexivity.
     * intro nlm. cbn.
-      replace (m+0)%nat with m by myomega.
+      replace (m+0)%nat with m by mylia.
       rewrite nlm. f_equal.
 Defined.
 
@@ -252,7 +254,7 @@ Proof.
   + intros m h. case_eq (n <=? m).
     * intro. reflexivity.
     * intro nlm. cbn.
-      replace (m+0)%nat with m by myomega.
+      replace (m+0)%nat with m by mylia.
       rewrite nlm. f_equal.
 Defined.
 
@@ -263,16 +265,16 @@ Proof.
   intro t. induction t ; intros i j k.
   all: try (cbn ; f_equal ; easy).
   unfold llift at 1. case_eq (n <? k) ; intro e ; bprop e.
-  - unfold lift. case_eq (k <=? n) ; intro e1 ; bprop e1 ; try myomega.
+  - unfold lift. case_eq (k <=? n) ; intro e1 ; bprop e1 ; try mylia.
     unfold llift. rewrite e. reflexivity.
   - case_eq (n <? k + j) ; intro e1 ; bprop e1.
-    + unfold lift. case_eq (k <=? n) ; intro e3 ; bprop e3 ; try myomega.
-      unfold llift. case_eq (i + n <? k) ; intro e5 ; bprop e5 ; try myomega.
-      case_eq (i + n <? k + (i+j)) ; intro e7 ; bprop e7 ; try myomega.
+    + unfold lift. case_eq (k <=? n) ; intro e3 ; bprop e3 ; try mylia.
+      unfold llift. case_eq (i + n <? k) ; intro e5 ; bprop e5 ; try mylia.
+      case_eq (i + n <? k + (i+j)) ; intro e7 ; bprop e7 ; try mylia.
       reflexivity.
-    + unfold lift. case_eq (k <=? n) ; intro e3 ; bprop e3 ; try myomega.
-      unfold llift. case_eq (i + n <? k) ; intro e5 ; bprop e5 ; try myomega.
-      case_eq (i + n <? k + (i + j)) ; intro e7 ; bprop e7 ; try myomega.
+    + unfold lift. case_eq (k <=? n) ; intro e3 ; bprop e3 ; try mylia.
+      unfold llift. case_eq (i + n <? k) ; intro e5 ; bprop e5 ; try mylia.
+      case_eq (i + n <? k + (i + j)) ; intro e7 ; bprop e7 ; try mylia.
       reflexivity.
 Defined.
 
@@ -282,23 +284,23 @@ Lemma lift_llift' :
 Proof.
   intro t. induction t ; intros i j k.
   all: try (cbn ; f_equal ;
-            try replace (S (S (k + i))) with ((S (S k)) + i)%nat by myomega ;
-            try replace (S (k + i)) with ((S k) + i)%nat by myomega ;
+            try replace (S (S (k + i))) with ((S (S k)) + i)%nat by mylia ;
+            try replace (S (k + i)) with ((S k) + i)%nat by mylia ;
             easy).
   unfold llift at 1. case_eq (n <? k) ; intro e ; bprop e.
-  - unfold lift. case_eq (k <=? n) ; intro e1 ; bprop e1 ; try myomega.
-    unfold llift. case_eq (n <? k + i) ; intro e3 ; bprop e3 ; try myomega.
+  - unfold lift. case_eq (k <=? n) ; intro e1 ; bprop e1 ; try mylia.
+    unfold llift. case_eq (n <? k + i) ; intro e3 ; bprop e3 ; try mylia.
     reflexivity.
   - case_eq (n <? k + j) ; intro e1 ; bprop e1.
-    + unfold lift. case_eq (k <=? n) ; intro e3 ; bprop e3 ; try myomega.
+    + unfold lift. case_eq (k <=? n) ; intro e3 ; bprop e3 ; try mylia.
       unfold llift.
-      case_eq (i + n <? k + i) ; intro e5 ; bprop e5 ; try myomega.
-      case_eq (i + n <? k + i + j) ; intro e7 ; bprop e7 ; try myomega.
+      case_eq (i + n <? k + i) ; intro e5 ; bprop e5 ; try mylia.
+      case_eq (i + n <? k + i + j) ; intro e7 ; bprop e7 ; try mylia.
       reflexivity.
-    + unfold lift. case_eq (k <=? n) ; intro e3 ; bprop e3 ; try myomega.
+    + unfold lift. case_eq (k <=? n) ; intro e3 ; bprop e3 ; try mylia.
       unfold llift.
-      case_eq (i + n <? k + i) ; intro e5 ; bprop e5 ; try myomega.
-      case_eq (i + n <? k + i + j) ; intro e7 ; bprop e7 ; try myomega.
+      case_eq (i + n <? k + i) ; intro e5 ; bprop e5 ; try mylia.
+      case_eq (i + n <? k + i + j) ; intro e7 ; bprop e7 ; try mylia.
       reflexivity.
 Defined.
 
@@ -309,25 +311,25 @@ Lemma lift_llift3 :
 Proof.
   intro t. induction t ; intros i j k l h.
   all: try (cbn ; f_equal ;
-            try replace (S (S (i + k))) with (i + (S (S k)))%nat by myomega ;
-            try replace (S (i + k)) with (i + (S k))%nat by myomega ;
+            try replace (S (S (i + k))) with (i + (S (S k)))%nat by mylia ;
+            try replace (S (i + k)) with (i + (S k))%nat by mylia ;
             easy).
   unfold llift at 1.
   case_eq (n <? k) ; intro e ; bprop e.
   - cbn. case_eq (l <=? n) ; intro e1 ; bprop e1.
-    + unfold llift. case_eq (i + n <? i + k) ; intro e3 ; bprop e3 ; try myomega.
+    + unfold llift. case_eq (i + n <? i + k) ; intro e3 ; bprop e3 ; try mylia.
       reflexivity.
-    + unfold llift. case_eq (n <? i + k) ; intro e3 ; bprop e3 ; try myomega.
+    + unfold llift. case_eq (n <? i + k) ; intro e3 ; bprop e3 ; try mylia.
       reflexivity.
   - case_eq (n <? k + j) ; intro e1 ; bprop e1.
-    + cbn. case_eq (l <=? n) ; intro e3 ; bprop e3 ; try myomega.
+    + cbn. case_eq (l <=? n) ; intro e3 ; bprop e3 ; try mylia.
       unfold llift.
-      case_eq (i + n <? i + k) ; intro e5 ; bprop e5 ; try myomega.
-      case_eq (i + n <? i + k + j) ; intro e7 ; bprop e7 ; try myomega.
+      case_eq (i + n <? i + k) ; intro e5 ; bprop e5 ; try mylia.
+      case_eq (i + n <? i + k + j) ; intro e7 ; bprop e7 ; try mylia.
       reflexivity.
-    + cbn. case_eq (l <=? n) ; intro e3 ; bprop e3 ; try myomega.
-      unfold llift. case_eq (i+n <? i+k) ; intro e5 ; bprop e5 ; try myomega.
-      case_eq (i+n <? i+k+j) ; intro e7 ; bprop e7 ; try myomega.
+    + cbn. case_eq (l <=? n) ; intro e3 ; bprop e3 ; try mylia.
+      unfold llift. case_eq (i+n <? i+k) ; intro e5 ; bprop e5 ; try mylia.
+      case_eq (i+n <? i+k+j) ; intro e7 ; bprop e7 ; try mylia.
       reflexivity.
 Defined.
 
@@ -339,22 +341,22 @@ Lemma lift_llift4 :
 Proof.
   intro t. induction t ; intros i j k l h1 h2.
   all: try (cbn ; f_equal ;
-            try replace (S (S (k + l))) with (k + (S (S l)))%nat by myomega ;
-            try replace (S (k + l)) with (k + (S l))%nat by myomega ;
+            try replace (S (S (k + l))) with (k + (S (S l)))%nat by mylia ;
+            try replace (S (k + l)) with (k + (S l))%nat by mylia ;
             easy).
   unfold llift at 1.
-  case_eq (n <? l) ; intro e ; bprop e ; try myomega.
-  - unfold lift. case_eq (l <=? n) ; intro e1 ; bprop e1 ; try myomega.
-    unfold llift. case_eq (n <? k + l) ; intro e3 ; bprop e3 ; try myomega.
+  case_eq (n <? l) ; intro e ; bprop e ; try mylia.
+  - unfold lift. case_eq (l <=? n) ; intro e1 ; bprop e1 ; try mylia.
+    unfold llift. case_eq (n <? k + l) ; intro e3 ; bprop e3 ; try mylia.
     reflexivity.
-  - case_eq (n <? l + (j - (i - k))) ; intro e1 ; bprop e1 ; try myomega.
-    + unfold lift. case_eq (l <=? n) ; intro e3 ; bprop e3 ; try myomega.
-      unfold llift. case_eq (i+n <? k+l) ; intro e5 ; bprop e5 ; try myomega.
-      case_eq (i+n <? k+l+j) ; intro e7 ; bprop e7 ; try myomega.
+  - case_eq (n <? l + (j - (i - k))) ; intro e1 ; bprop e1 ; try mylia.
+    + unfold lift. case_eq (l <=? n) ; intro e3 ; bprop e3 ; try mylia.
+      unfold llift. case_eq (i+n <? k+l) ; intro e5 ; bprop e5 ; try mylia.
+      case_eq (i+n <? k+l+j) ; intro e7 ; bprop e7 ; try mylia.
       reflexivity.
-    + unfold lift. case_eq (l <=? n) ; intro e3 ; bprop e3 ; try myomega.
-      unfold llift. case_eq (i+n <? k+l) ; intro e5 ; bprop e5 ; try myomega.
-      case_eq (i+n <? k+l+j) ; intro e7 ; bprop e7 ; try myomega.
+    + unfold lift. case_eq (l <=? n) ; intro e3 ; bprop e3 ; try mylia.
+      unfold llift. case_eq (i+n <? k+l) ; intro e5 ; bprop e5 ; try mylia.
+      case_eq (i+n <? k+l+j) ; intro e7 ; bprop e7 ; try mylia.
       reflexivity.
 Defined.
 
@@ -367,10 +369,10 @@ Proof.
   intro t. induction t ; intros i j k l h1 h2.
   all: try (cbn ; f_equal ; easy).
   unfold lift. case_eq (l <=? n) ; intro e ; bprop e.
-  - unfold llift. case_eq (i+n <? k) ; intro e1 ; bprop e1 ; try myomega.
-    case_eq (i+n <? k+j) ; intro e3 ; bprop e3 ; try myomega.
+  - unfold llift. case_eq (i+n <? k) ; intro e1 ; bprop e1 ; try mylia.
+    case_eq (i+n <? k+j) ; intro e3 ; bprop e3 ; try mylia.
     reflexivity.
-  - unfold llift. case_eq (n <? k) ; intro e1 ; bprop e1 ; try myomega.
+  - unfold llift. case_eq (n <? k) ; intro e1 ; bprop e1 ; try mylia.
     reflexivity.
 Defined.
 
@@ -381,16 +383,16 @@ Proof.
   intro t. induction t ; intros i j k.
   all: try (cbn ; f_equal ; easy).
   unfold rlift at 1. case_eq (n <? k) ; intro e ; bprop e.
-  - unfold lift. case_eq (k <=? n) ; intro e1 ; bprop e1 ; try myomega.
+  - unfold lift. case_eq (k <=? n) ; intro e1 ; bprop e1 ; try mylia.
     unfold rlift. rewrite e. reflexivity.
   - case_eq (n <? k + j) ; intro e1 ; bprop e1.
-    + unfold lift. case_eq (k <=? n) ; intro e3 ; bprop e3 ; try myomega.
-      unfold rlift. case_eq (i + n <? k) ; intro e5 ; bprop e5 ; try myomega.
-      case_eq (i + n <? k + (i+j)) ; intro e7 ; bprop e7 ; try myomega.
+    + unfold lift. case_eq (k <=? n) ; intro e3 ; bprop e3 ; try mylia.
+      unfold rlift. case_eq (i + n <? k) ; intro e5 ; bprop e5 ; try mylia.
+      case_eq (i + n <? k + (i+j)) ; intro e7 ; bprop e7 ; try mylia.
       reflexivity.
-    + unfold lift. case_eq (k <=? n) ; intro e3 ; bprop e3 ; try myomega.
-      unfold rlift. case_eq (i + n <? k) ; intro e5 ; bprop e5 ; try myomega.
-      case_eq (i + n <? k + (i + j)) ; intro e7 ; bprop e7 ; try myomega.
+    + unfold lift. case_eq (k <=? n) ; intro e3 ; bprop e3 ; try mylia.
+      unfold rlift. case_eq (i + n <? k) ; intro e5 ; bprop e5 ; try mylia.
+      case_eq (i + n <? k + (i + j)) ; intro e7 ; bprop e7 ; try mylia.
       reflexivity.
 Defined.
 
@@ -400,23 +402,23 @@ Lemma lift_rlift' :
 Proof.
   intro t. induction t ; intros i j k.
   all: try (cbn ; f_equal ;
-            try replace (S (S (k + i))) with ((S (S k)) + i)%nat by myomega ;
-            try replace (S (k + i)) with ((S k) + i)%nat by myomega ;
+            try replace (S (S (k + i))) with ((S (S k)) + i)%nat by mylia ;
+            try replace (S (k + i)) with ((S k) + i)%nat by mylia ;
             easy).
   unfold rlift at 1. case_eq (n <? k) ; intro e ; bprop e.
-  - unfold lift. case_eq (k <=? n) ; intro e1 ; bprop e1 ; try myomega.
-    unfold rlift. case_eq (n <? k + i) ; intro e3 ; bprop e3 ; try myomega.
+  - unfold lift. case_eq (k <=? n) ; intro e1 ; bprop e1 ; try mylia.
+    unfold rlift. case_eq (n <? k + i) ; intro e3 ; bprop e3 ; try mylia.
     reflexivity.
   - case_eq (n <? k + j) ; intro e1 ; bprop e1.
-    + unfold lift. case_eq (k <=? n) ; intro e3 ; bprop e3 ; try myomega.
+    + unfold lift. case_eq (k <=? n) ; intro e3 ; bprop e3 ; try mylia.
       unfold rlift.
-      case_eq (i + n <? k + i) ; intro e5 ; bprop e5 ; try myomega.
-      case_eq (i + n <? k + i + j) ; intro e7 ; bprop e7 ; try myomega.
+      case_eq (i + n <? k + i) ; intro e5 ; bprop e5 ; try mylia.
+      case_eq (i + n <? k + i + j) ; intro e7 ; bprop e7 ; try mylia.
       reflexivity.
-    + unfold lift. case_eq (k <=? n) ; intro e3 ; bprop e3 ; try myomega.
+    + unfold lift. case_eq (k <=? n) ; intro e3 ; bprop e3 ; try mylia.
       unfold rlift.
-      case_eq (i + n <? k + i) ; intro e5 ; bprop e5 ; try myomega.
-      case_eq (i + n <? k + i + j) ; intro e7 ; bprop e7 ; try myomega.
+      case_eq (i + n <? k + i) ; intro e5 ; bprop e5 ; try mylia.
+      case_eq (i + n <? k + i + j) ; intro e7 ; bprop e7 ; try mylia.
       reflexivity.
 Defined.
 
@@ -427,25 +429,25 @@ Lemma lift_rlift3 :
 Proof.
   intro t. induction t ; intros i j k l h.
   all: try (cbn ; f_equal ;
-            try replace (S (S (i + k))) with (i + (S (S k)))%nat by myomega ;
-            try replace (S (i + k)) with (i + (S k))%nat by myomega ;
+            try replace (S (S (i + k))) with (i + (S (S k)))%nat by mylia ;
+            try replace (S (i + k)) with (i + (S k))%nat by mylia ;
             easy).
   unfold rlift at 1.
   case_eq (n <? k) ; intro e ; bprop e.
   - cbn. case_eq (l <=? n) ; intro e1 ; bprop e1.
-    + unfold rlift. case_eq (i + n <? i + k) ; intro e3 ; bprop e3 ; try myomega.
+    + unfold rlift. case_eq (i + n <? i + k) ; intro e3 ; bprop e3 ; try mylia.
       reflexivity.
-    + unfold rlift. case_eq (n <? i + k) ; intro e3 ; bprop e3 ; try myomega.
+    + unfold rlift. case_eq (n <? i + k) ; intro e3 ; bprop e3 ; try mylia.
       reflexivity.
   - case_eq (n <? k + j) ; intro e1 ; bprop e1.
-    + cbn. case_eq (l <=? n) ; intro e3 ; bprop e3 ; try myomega.
+    + cbn. case_eq (l <=? n) ; intro e3 ; bprop e3 ; try mylia.
       unfold rlift.
-      case_eq (i + n <? i + k) ; intro e5 ; bprop e5 ; try myomega.
-      case_eq (i + n <? i + k + j) ; intro e7 ; bprop e7 ; try myomega.
+      case_eq (i + n <? i + k) ; intro e5 ; bprop e5 ; try mylia.
+      case_eq (i + n <? i + k + j) ; intro e7 ; bprop e7 ; try mylia.
       reflexivity.
-    + cbn. case_eq (l <=? n) ; intro e3 ; bprop e3 ; try myomega.
-      unfold rlift. case_eq (i+n <? i+k) ; intro e5 ; bprop e5 ; try myomega.
-      case_eq (i+n <? i+k+j) ; intro e7 ; bprop e7 ; try myomega.
+    + cbn. case_eq (l <=? n) ; intro e3 ; bprop e3 ; try mylia.
+      unfold rlift. case_eq (i+n <? i+k) ; intro e5 ; bprop e5 ; try mylia.
+      case_eq (i+n <? i+k+j) ; intro e7 ; bprop e7 ; try mylia.
       reflexivity.
 Defined.
 
@@ -457,22 +459,22 @@ Lemma lift_rlift4 :
 Proof.
   intro t. induction t ; intros i j k l h1 h2.
   all: try (cbn ; f_equal ;
-            try replace (S (S (k + l))) with (k + (S (S l)))%nat by myomega ;
-            try replace (S (k + l)) with (k + (S l))%nat by myomega ;
+            try replace (S (S (k + l))) with (k + (S (S l)))%nat by mylia ;
+            try replace (S (k + l)) with (k + (S l))%nat by mylia ;
             easy).
   unfold rlift at 1.
-  case_eq (n <? l) ; intro e ; bprop e ; try myomega.
-  - unfold lift. case_eq (l <=? n) ; intro e1 ; bprop e1 ; try myomega.
-    unfold rlift. case_eq (n <? k + l) ; intro e3 ; bprop e3 ; try myomega.
+  case_eq (n <? l) ; intro e ; bprop e ; try mylia.
+  - unfold lift. case_eq (l <=? n) ; intro e1 ; bprop e1 ; try mylia.
+    unfold rlift. case_eq (n <? k + l) ; intro e3 ; bprop e3 ; try mylia.
     reflexivity.
-  - case_eq (n <? l + (j - (i - k))) ; intro e1 ; bprop e1 ; try myomega.
-    + unfold lift. case_eq (l <=? n) ; intro e3 ; bprop e3 ; try myomega.
-      unfold rlift. case_eq (i+n <? k+l) ; intro e5 ; bprop e5 ; try myomega.
-      case_eq (i+n <? k+l+j) ; intro e7 ; bprop e7 ; try myomega.
+  - case_eq (n <? l + (j - (i - k))) ; intro e1 ; bprop e1 ; try mylia.
+    + unfold lift. case_eq (l <=? n) ; intro e3 ; bprop e3 ; try mylia.
+      unfold rlift. case_eq (i+n <? k+l) ; intro e5 ; bprop e5 ; try mylia.
+      case_eq (i+n <? k+l+j) ; intro e7 ; bprop e7 ; try mylia.
       reflexivity.
-    + unfold lift. case_eq (l <=? n) ; intro e3 ; bprop e3 ; try myomega.
-      unfold rlift. case_eq (i+n <? k+l) ; intro e5 ; bprop e5 ; try myomega.
-      case_eq (i+n <? k+l+j) ; intro e7 ; bprop e7 ; try myomega.
+    + unfold lift. case_eq (l <=? n) ; intro e3 ; bprop e3 ; try mylia.
+      unfold rlift. case_eq (i+n <? k+l) ; intro e5 ; bprop e5 ; try mylia.
+      case_eq (i+n <? k+l+j) ; intro e7 ; bprop e7 ; try mylia.
       reflexivity.
 Defined.
 
@@ -485,10 +487,10 @@ Proof.
   intro t. induction t ; intros i j k l h1 h2.
   all: try (cbn ; f_equal ; easy).
   unfold lift. case_eq (l <=? n) ; intro e ; bprop e.
-  - unfold rlift. case_eq (i+n <? k) ; intro e1 ; bprop e1 ; try myomega.
-    case_eq (i+n <? k+j) ; intro e3 ; bprop e3 ; try myomega.
+  - unfold rlift. case_eq (i+n <? k) ; intro e1 ; bprop e1 ; try mylia.
+    case_eq (i+n <? k+j) ; intro e3 ; bprop e3 ; try mylia.
     reflexivity.
-  - unfold rlift. case_eq (n <? k) ; intro e1 ; bprop e1 ; try myomega.
+  - unfold rlift. case_eq (n <? k) ; intro e1 ; bprop e1 ; try mylia.
     reflexivity.
 Defined.
 
@@ -600,7 +602,7 @@ Proof.
   dependent induction hm.
   - cbn. easy.
   - intro n. destruct n ; intros isdecl isdecl1 isdecl2.
-    + cbn. replace (#|Γm| - 0) with #|Γm| by myomega. reflexivity.
+    + cbn. replace (#|Γm| - 0) with #|Γm| by mylia. reflexivity.
     + cbn. erewrite IHhm. reflexivity.
 Defined.
 
@@ -610,41 +612,41 @@ Definition llift_subst :
 Proof.
   induction u ; intros t i j m.
   all: try (cbn ; f_equal;
-            try replace (S (S (S (j + m))))%nat with (j + (S (S (S m))))%nat by myomega ;
-            try replace (S (S (j + m)))%nat with (j + (S (S m)))%nat by myomega ;
-            try replace (S (j + m))%nat with (j + (S m))%nat by myomega ;
-            try replace (S (S (S (i + m))))%nat with (i + (S (S (S m))))%nat by myomega ;
-            try replace (S (S (i + m)))%nat with (i + (S (S m)))%nat by myomega ;
-            try replace (S (i + m))%nat with (i + (S m))%nat by myomega;
-            try  (rewrite IHu; cbn; repeat f_equal; myomega);
-            try  (rewrite IHu1; cbn; repeat f_equal; myomega);
-            try  (rewrite IHu2; cbn; repeat f_equal; myomega);
-            try  (rewrite IHu3; cbn; repeat f_equal; myomega);
-            try  (rewrite IHu4; cbn; repeat f_equal; myomega);
-            try  (rewrite IHu5; cbn; repeat f_equal; myomega);
-            try  (rewrite IHu6; cbn; repeat f_equal; myomega);
-            try  (rewrite IHu7; cbn; repeat f_equal; myomega);
-            try  (rewrite IHu8; cbn; repeat f_equal; myomega)).
+            try replace (S (S (S (j + m))))%nat with (j + (S (S (S m))))%nat by mylia ;
+            try replace (S (S (j + m)))%nat with (j + (S (S m)))%nat by mylia ;
+            try replace (S (j + m))%nat with (j + (S m))%nat by mylia ;
+            try replace (S (S (S (i + m))))%nat with (i + (S (S (S m))))%nat by mylia ;
+            try replace (S (S (i + m)))%nat with (i + (S (S m)))%nat by mylia ;
+            try replace (S (i + m))%nat with (i + (S m))%nat by mylia;
+            try  (rewrite IHu; cbn; repeat f_equal; mylia);
+            try  (rewrite IHu1; cbn; repeat f_equal; mylia);
+            try  (rewrite IHu2; cbn; repeat f_equal; mylia);
+            try  (rewrite IHu3; cbn; repeat f_equal; mylia);
+            try  (rewrite IHu4; cbn; repeat f_equal; mylia);
+            try  (rewrite IHu5; cbn; repeat f_equal; mylia);
+            try  (rewrite IHu6; cbn; repeat f_equal; mylia);
+            try  (rewrite IHu7; cbn; repeat f_equal; mylia);
+            try  (rewrite IHu8; cbn; repeat f_equal; mylia)).
   case_eq (m ?= n) ; intro e ; bprop e.
-  - subst. case_eq (n <=? i + n) ; intro e1 ; bprop e1 ; try myomega.
-    cbn. rewrite e. rewrite lift_llift3 by myomega.
-    f_equal. myomega.
+  - subst. case_eq (n <=? i + n) ; intro e1 ; bprop e1 ; try mylia.
+    cbn. rewrite e. rewrite lift_llift3 by mylia.
+    f_equal. mylia.
   - case_eq (n <=? i + m) ; intro e1 ; bprop e1.
     + unfold llift at 1.
-      case_eq (Init.Nat.pred n <? i + m) ; intro e3 ; bprop e3 ; try myomega.
+      case_eq (Init.Nat.pred n <? i + m) ; intro e3 ; bprop e3 ; try mylia.
       cbn. rewrite e. reflexivity.
     + case_eq (n <=? i+m+j) ; intro e3 ; bprop e3.
       * unfold llift at 1.
-        case_eq (Init.Nat.pred n <? i + m) ; intro e5 ; bprop e5 ; try myomega.
-        case_eq (Init.Nat.pred n <? i+m+j) ; intro e7 ; bprop e7 ; try myomega.
+        case_eq (Init.Nat.pred n <? i + m) ; intro e5 ; bprop e5 ; try mylia.
+        case_eq (Init.Nat.pred n <? i+m+j) ; intro e7 ; bprop e7 ; try mylia.
         cbn. rewrite e. reflexivity.
       * unfold llift at 1.
-        case_eq (Init.Nat.pred n <? i + m) ; intro e5 ; bprop e5 ; try myomega.
-        case_eq (Init.Nat.pred n <? i+m+j) ; intro e7 ; bprop e7 ; try myomega.
+        case_eq (Init.Nat.pred n <? i + m) ; intro e5 ; bprop e5 ; try mylia.
+        case_eq (Init.Nat.pred n <? i+m+j) ; intro e7 ; bprop e7 ; try mylia.
         cbn. rewrite e. reflexivity.
-  - case_eq (n <=? i+m) ; intro e1 ; bprop e1 ; try myomega.
+  - case_eq (n <=? i+m) ; intro e1 ; bprop e1 ; try mylia.
     unfold llift at 1.
-    case_eq (n <? i+m) ; intro e3 ; bprop e3 ; try myomega.
+    case_eq (n <? i+m) ; intro e3 ; bprop e3 ; try mylia.
     cbn. rewrite e. reflexivity.
 Defined.
 
@@ -654,41 +656,41 @@ Definition rlift_subst :
 Proof.
   induction u ; intros t i j m.
   all: try (cbn ; f_equal;
-            try replace (S (S (S (j + m))))%nat with (j + (S (S (S m))))%nat by myomega ;
-            try replace (S (S (j + m)))%nat with (j + (S (S m)))%nat by myomega ;
-            try replace (S (j + m))%nat with (j + (S m))%nat by myomega ;
-            try replace (S (S (S (i + m))))%nat with (i + (S (S (S m))))%nat by myomega ;
-            try replace (S (S (i + m)))%nat with (i + (S (S m)))%nat by myomega ;
-            try replace (S (i + m))%nat with (i + (S m))%nat by myomega;
-            try  (rewrite IHu; cbn; repeat f_equal; myomega);
-            try  (rewrite IHu1; cbn; repeat f_equal; myomega);
-            try  (rewrite IHu2; cbn; repeat f_equal; myomega);
-            try  (rewrite IHu3; cbn; repeat f_equal; myomega);
-            try  (rewrite IHu4; cbn; repeat f_equal; myomega);
-            try  (rewrite IHu5; cbn; repeat f_equal; myomega);
-            try  (rewrite IHu6; cbn; repeat f_equal; myomega);
-            try  (rewrite IHu7; cbn; repeat f_equal; myomega);
-            try  (rewrite IHu8; cbn; repeat f_equal; myomega)).
+            try replace (S (S (S (j + m))))%nat with (j + (S (S (S m))))%nat by mylia ;
+            try replace (S (S (j + m)))%nat with (j + (S (S m)))%nat by mylia ;
+            try replace (S (j + m))%nat with (j + (S m))%nat by mylia ;
+            try replace (S (S (S (i + m))))%nat with (i + (S (S (S m))))%nat by mylia ;
+            try replace (S (S (i + m)))%nat with (i + (S (S m)))%nat by mylia ;
+            try replace (S (i + m))%nat with (i + (S m))%nat by mylia;
+            try  (rewrite IHu; cbn; repeat f_equal; mylia);
+            try  (rewrite IHu1; cbn; repeat f_equal; mylia);
+            try  (rewrite IHu2; cbn; repeat f_equal; mylia);
+            try  (rewrite IHu3; cbn; repeat f_equal; mylia);
+            try  (rewrite IHu4; cbn; repeat f_equal; mylia);
+            try  (rewrite IHu5; cbn; repeat f_equal; mylia);
+            try  (rewrite IHu6; cbn; repeat f_equal; mylia);
+            try  (rewrite IHu7; cbn; repeat f_equal; mylia);
+            try  (rewrite IHu8; cbn; repeat f_equal; mylia)).
   case_eq (m ?= n) ; intro e ; bprop e.
-  - subst. case_eq (n <=? i + n) ; intro e1 ; bprop e1 ; try myomega.
-    cbn. rewrite e. rewrite lift_rlift3 by myomega.
-    f_equal. myomega.
+  - subst. case_eq (n <=? i + n) ; intro e1 ; bprop e1 ; try mylia.
+    cbn. rewrite e. rewrite lift_rlift3 by mylia.
+    f_equal. mylia.
   - case_eq (n <=? i + m) ; intro e1 ; bprop e1.
     + unfold rlift at 1.
-      case_eq (Init.Nat.pred n <? i + m) ; intro e3 ; bprop e3 ; try myomega.
+      case_eq (Init.Nat.pred n <? i + m) ; intro e3 ; bprop e3 ; try mylia.
       cbn. rewrite e. reflexivity.
     + case_eq (n <=? i+m+j) ; intro e3 ; bprop e3.
       * unfold rlift at 1.
-        case_eq (Init.Nat.pred n <? i + m) ; intro e5 ; bprop e5 ; try myomega.
-        case_eq (Init.Nat.pred n <? i+m+j) ; intro e7 ; bprop e7 ; try myomega.
+        case_eq (Init.Nat.pred n <? i + m) ; intro e5 ; bprop e5 ; try mylia.
+        case_eq (Init.Nat.pred n <? i+m+j) ; intro e7 ; bprop e7 ; try mylia.
         cbn. rewrite e. reflexivity.
       * unfold rlift at 1.
-        case_eq (Init.Nat.pred n <? i + m) ; intro e5 ; bprop e5 ; try myomega.
-        case_eq (Init.Nat.pred n <? i+m+j) ; intro e7 ; bprop e7 ; try myomega.
+        case_eq (Init.Nat.pred n <? i + m) ; intro e5 ; bprop e5 ; try mylia.
+        case_eq (Init.Nat.pred n <? i+m+j) ; intro e7 ; bprop e7 ; try mylia.
         cbn. rewrite e. reflexivity.
-  - case_eq (n <=? i+m) ; intro e1 ; bprop e1 ; try myomega.
+  - case_eq (n <=? i+m) ; intro e1 ; bprop e1 ; try mylia.
     unfold rlift at 1.
-    case_eq (n <? i+m) ; intro e3 ; bprop e3 ; try myomega.
+    case_eq (n <? i+m) ; intro e3 ; bprop e3 ; try mylia.
     cbn. rewrite e. reflexivity.
 Defined.
 
@@ -700,7 +702,7 @@ Proof.
   intro Δ. induction Δ.
   - cbn. easy.
   - intro Γm. destruct n ; intros is1 is2.
-    + cbn. replace (#|Δ| - 0) with #|Δ| by myomega. reflexivity.
+    + cbn. replace (#|Δ| - 0) with #|Δ| by mylia. reflexivity.
     + cbn. erewrite IHΔ. reflexivity.
 Defined.
 
@@ -712,7 +714,7 @@ Proof.
   intro Δ. induction Δ.
   - cbn. easy.
   - intro Γm. destruct n ; intros is1 is2.
-    + cbn. replace (#|Δ| - 0) with #|Δ| by myomega. reflexivity.
+    + cbn. replace (#|Δ| - 0) with #|Δ| by mylia. reflexivity.
     + cbn. erewrite IHΔ. reflexivity.
 Defined.
 
@@ -752,7 +754,7 @@ Proof.
             reflexivity).
   unfold closed in clo. unfold closed_above in clo.
   bprop clo. unfold llift.
-  case_eq (n <? k) ; intro e ; bprop e ; try myomega.
+  case_eq (n <? k) ; intro e ; bprop e ; try mylia.
   reflexivity.
 Defined.
 
@@ -765,7 +767,7 @@ Proof.
   unfold closed in h.
   eapply closed_above_llift_id.
   - eassumption.
-  - myomega.
+  - mylia.
 Defined.
 
 Fact closed_above_rlift_id :
@@ -780,7 +782,7 @@ Proof.
             reflexivity).
   unfold closed in clo. unfold closed_above in clo.
   bprop clo. unfold rlift.
-  case_eq (n <? k) ; intro e ; bprop e ; try myomega.
+  case_eq (n <? k) ; intro e ; bprop e ; try mylia.
   reflexivity.
 Defined.
 
@@ -793,7 +795,7 @@ Proof.
   unfold closed in h.
   eapply closed_above_rlift_id.
   - eassumption.
-  - myomega.
+  - mylia.
 Defined.
 
 Fixpoint llift_red1 {n k t1 t2} (h : t1 ▷ t2) :
@@ -809,10 +811,10 @@ Proof.
           end
         end.
   - eapply meta_red_eq ; [ econstructor |].
-    replace k with (k + 0)%nat by myomega.
+    replace k with (k + 0)%nat by mylia.
     rewrite llift_subst.
-    replace (k + 0)%nat with k by myomega.
-    replace (S k + 0)%nat with (S k) by myomega.
+    replace (k + 0)%nat with k by mylia.
+    replace (S k + 0)%nat with (S k) by mylia.
     reflexivity.
   - eapply meta_red_eq ; [ econstructor |]. reflexivity.
   - eapply meta_red_eq ; [ econstructor |]. reflexivity.
@@ -864,10 +866,10 @@ Proof.
           end
         end.
   - eapply meta_red_eq ; [ econstructor |].
-    replace k with (k + 0)%nat by myomega.
+    replace k with (k + 0)%nat by mylia.
     rewrite rlift_subst.
-    replace (k + 0)%nat with k by myomega.
-    replace (S k + 0)%nat with (S k) by myomega.
+    replace (k + 0)%nat with k by mylia.
+    replace (S k + 0)%nat with (S k) by mylia.
     reflexivity.
   - eapply meta_red_eq ; [ econstructor |]. reflexivity.
   - eapply meta_red_eq ; [ econstructor |]. reflexivity.
@@ -1062,8 +1064,8 @@ Proof.
           eapply meta_conv.
           * eapply type_Rel. eapply wf_llift' ; eassumption.
           * erewrite safe_nth_lt. erewrite safe_nth_llift.
-            rewrite lift_llift3 by myomega.
-            f_equal. myomega.
+            rewrite lift_llift3 by mylia.
+            f_equal. mylia.
         + case_eq (n <? #|Δ| + #|Γm|) ; intro e1 ; bprop e1.
           * erewrite safe_nth_ge'. erewrite safe_nth_lt.
             eapply type_ProjT1' ; try assumption.
@@ -1075,9 +1077,9 @@ Proof.
                cbn. f_equal.
                replace (S (n - #|llift_context #|Γm| Δ|))
                  with ((S n) - #|Δ|)
-                 by (rewrite llift_context_length ; myomega).
-               rewrite lift_llift4 by myomega. f_equal.
-               ++ myomega.
+                 by (rewrite llift_context_length ; mylia).
+               rewrite lift_llift4 by mylia. f_equal.
+               ++ mylia.
                ++ f_equal. eapply safe_nth_cong_irr.
                   rewrite llift_context_length. reflexivity.
           * erewrite safe_nth_ge'. erewrite safe_nth_ge'.
@@ -1085,47 +1087,47 @@ Proof.
             -- eapply type_Rel.
                eapply wf_llift' ; eassumption.
             -- erewrite safe_nth_ge'. erewrite safe_nth_ge'.
-               rewrite lift_llift5 by myomega.
+               rewrite lift_llift5 by mylia.
                f_equal. eapply safe_nth_cong_irr.
-               rewrite llift_context_length. rewrite (mix'_length1 hm). myomega.
+               rewrite llift_context_length. rewrite (mix'_length1 hm). mylia.
       - cbn. eapply type_Sort. eapply wf_llift' ; eassumption.
       - cbn. eapply type_Prod ; emh.
       - cbn. eapply type_Lambda ; emh.
-      - cbn. replace #|Δ| with (#|Δ| + 0)%nat by myomega.
+      - cbn. replace #|Δ| with (#|Δ| + 0)%nat by mylia.
         rewrite llift_subst. cbn.
-        replace (#|Δ| + 0)%nat with #|Δ| by myomega.
+        replace (#|Δ| + 0)%nat with #|Δ| by mylia.
         eapply type_App ; emh.
       - cbn. eapply type_Sum ; emh.
       - cbn. eapply type_Pair ; emh.
-        replace #|Δ| with (#|Δ| + 0)%nat by myomega.
+        replace #|Δ| with (#|Δ| + 0)%nat by mylia.
         rewrite llift_subst.
-        cbn. replace (#|Δ| + 0)%nat with #|Δ| by myomega.
+        cbn. replace (#|Δ| + 0)%nat with #|Δ| by mylia.
         reflexivity.
       - cbn. eapply type_Pi1 ; emh.
-      - cbn. replace #|Δ| with (#|Δ| + 0)%nat by myomega.
+      - cbn. replace #|Δ| with (#|Δ| + 0)%nat by mylia.
         rewrite llift_subst.
-        cbn. replace (#|Δ| + 0)%nat with #|Δ| by myomega.
+        cbn. replace (#|Δ| + 0)%nat with #|Δ| by mylia.
         eapply type_Pi2 ; emh.
       - cbn. eapply type_Eq ; emh.
       - cbn. eapply type_Refl ; emh.
-      - cbn. replace #|Δ| with (#|Δ| + 0)%nat by myomega.
+      - cbn. replace #|Δ| with (#|Δ| + 0)%nat by mylia.
         rewrite llift_subst.
-        replace (S #|Δ| + 0)%nat with (#|Δ| + 1)%nat by myomega.
+        replace (S #|Δ| + 0)%nat with (#|Δ| + 1)%nat by mylia.
         rewrite llift_subst.
-        cbn. replace (#|Δ| + 0)%nat with #|Δ| by myomega.
-        replace (S (#|Δ| + 1))%nat with (S (S #|Δ|)) by myomega.
+        cbn. replace (#|Δ| + 0)%nat with #|Δ| by mylia.
+        replace (S (#|Δ| + 1))%nat with (S (S #|Δ|)) by mylia.
         eapply type_J ; emh.
         + cbn. unfold ssnoc. cbn. f_equal. f_equal.
-          * replace (S #|Δ|) with (1 + #|Δ|)%nat by myomega.
-            rewrite lift_llift3 by myomega. reflexivity.
-          * replace (S #|Δ|) with (1 + #|Δ|)%nat by myomega.
-            rewrite lift_llift3 by myomega. reflexivity.
-        + replace (S (S #|Δ|)) with ((S #|Δ|) + 1)%nat by myomega.
+          * replace (S #|Δ|) with (1 + #|Δ|)%nat by mylia.
+            rewrite lift_llift3 by mylia. reflexivity.
+          * replace (S #|Δ|) with (1 + #|Δ|)%nat by mylia.
+            rewrite lift_llift3 by mylia. reflexivity.
+        + replace (S (S #|Δ|)) with ((S #|Δ|) + 1)%nat by mylia.
           rewrite <- llift_subst.
           change (sRefl (llift #|Γm| #|Δ| A0) (llift #|Γm| #|Δ| u))
             with (llift #|Γm| #|Δ| (sRefl A0 u)).
-          replace (#|Δ| + 1)%nat with (S #|Δ| + 0)%nat by myomega.
-          rewrite <- llift_subst. f_equal. myomega.
+          replace (#|Δ| + 1)%nat with (S #|Δ| + 0)%nat by mylia.
+          rewrite <- llift_subst. f_equal. mylia.
       - cbn. eapply type_Transport ; emh.
       - cbn. eapply type_Heq ; emh.
       - cbn. eapply type_HeqToEq ; emh.
@@ -1137,95 +1139,95 @@ Proof.
       - cbn. eapply type_HeqTransport ; emh.
       - cbn. eapply type_CongProd ; emh.
         cbn. f_equal.
-        + rewrite lift_llift3 by myomega.
-          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+        + rewrite lift_llift3 by mylia.
+          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
           rewrite llift_subst. cbn. reflexivity.
-        + rewrite lift_llift3 by myomega.
-          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+        + rewrite lift_llift3 by mylia.
+          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
           rewrite llift_subst. cbn. reflexivity.
       - cbn. eapply type_CongLambda ; emh.
         + cbn. f_equal.
-          * rewrite lift_llift3 by myomega.
-            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+          * rewrite lift_llift3 by mylia.
+            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
             rewrite llift_subst. cbn. reflexivity.
-          * rewrite lift_llift3 by myomega.
-            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+          * rewrite lift_llift3 by mylia.
+            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
             rewrite llift_subst. cbn. reflexivity.
         + cbn. f_equal.
-          * rewrite lift_llift3 by myomega.
-            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+          * rewrite lift_llift3 by mylia.
+            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
             rewrite llift_subst. cbn. reflexivity.
-          * rewrite lift_llift3 by myomega.
-            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+          * rewrite lift_llift3 by mylia.
+            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
             rewrite llift_subst. cbn. reflexivity.
-          * rewrite lift_llift3 by myomega.
-            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+          * rewrite lift_llift3 by mylia.
+            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
             rewrite llift_subst. cbn. reflexivity.
-          * rewrite lift_llift3 by myomega.
-            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+          * rewrite lift_llift3 by mylia.
+            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
             rewrite llift_subst. cbn. reflexivity.
-      - cbn. replace #|Δ| with (#|Δ| + 0)%nat by myomega.
+      - cbn. replace #|Δ| with (#|Δ| + 0)%nat by mylia.
         rewrite 2!llift_subst. cbn.
-        replace (#|Δ| + 0)%nat with #|Δ| by myomega.
+        replace (#|Δ| + 0)%nat with #|Δ| by mylia.
         eapply type_CongApp ; emh.
         cbn. f_equal.
-        + rewrite lift_llift3 by myomega.
-          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+        + rewrite lift_llift3 by mylia.
+          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
           rewrite llift_subst. cbn. reflexivity.
-        + rewrite lift_llift3 by myomega.
-          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+        + rewrite lift_llift3 by mylia.
+          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
           rewrite llift_subst. cbn. reflexivity.
       - cbn. eapply type_CongSum ; emh.
         cbn. f_equal.
-        + rewrite lift_llift3 by myomega.
-          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+        + rewrite lift_llift3 by mylia.
+          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
           rewrite llift_subst. cbn. reflexivity.
-        + rewrite lift_llift3 by myomega.
-          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+        + rewrite lift_llift3 by mylia.
+          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
           rewrite llift_subst. cbn. reflexivity.
       - cbn. eapply type_CongPair ; emh.
         + cbn. f_equal.
-          * rewrite lift_llift3 by myomega.
-            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+          * rewrite lift_llift3 by mylia.
+            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
             rewrite llift_subst. cbn. reflexivity.
-          * rewrite lift_llift3 by myomega.
-            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+          * rewrite lift_llift3 by mylia.
+            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
             rewrite llift_subst. cbn. reflexivity.
         + cbn. f_equal.
-          * replace #|Δ| with (#|Δ| + 0)%nat by myomega.
+          * replace #|Δ| with (#|Δ| + 0)%nat by mylia.
             rewrite llift_subst. cbn.
-            replace (#|Δ| + 0)%nat with #|Δ| by myomega.
+            replace (#|Δ| + 0)%nat with #|Δ| by mylia.
             reflexivity.
-          * replace #|Δ| with (#|Δ| + 0)%nat by myomega.
+          * replace #|Δ| with (#|Δ| + 0)%nat by mylia.
             rewrite llift_subst. cbn.
-            replace (#|Δ| + 0)%nat with #|Δ| by myomega.
+            replace (#|Δ| + 0)%nat with #|Δ| by mylia.
             reflexivity.
-        + replace #|Δ| with (#|Δ| + 0)%nat by myomega.
+        + replace #|Δ| with (#|Δ| + 0)%nat by mylia.
           rewrite llift_subst. cbn.
-          replace (#|Δ| + 0)%nat with #|Δ| by myomega.
+          replace (#|Δ| + 0)%nat with #|Δ| by mylia.
           reflexivity.
-        + replace #|Δ| with (#|Δ| + 0)%nat by myomega.
+        + replace #|Δ| with (#|Δ| + 0)%nat by mylia.
           rewrite llift_subst. cbn.
-          replace (#|Δ| + 0)%nat with #|Δ| by myomega.
+          replace (#|Δ| + 0)%nat with #|Δ| by mylia.
           reflexivity.
       - cbn. eapply type_CongPi1 ; emh.
         cbn. f_equal.
-        + rewrite lift_llift3 by myomega.
-          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+        + rewrite lift_llift3 by mylia.
+          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
           rewrite llift_subst. cbn. reflexivity.
-        + rewrite lift_llift3 by myomega.
-          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+        + rewrite lift_llift3 by mylia.
+          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
           rewrite llift_subst. cbn. reflexivity.
-      - cbn. replace #|Δ| with (#|Δ| + 0)%nat by myomega.
+      - cbn. replace #|Δ| with (#|Δ| + 0)%nat by mylia.
         rewrite 2!llift_subst. cbn.
-        replace (#|Δ| + 0)%nat with #|Δ| by myomega.
+        replace (#|Δ| + 0)%nat with #|Δ| by mylia.
         eapply type_CongPi2 ; emh.
         cbn. f_equal.
-        + rewrite lift_llift3 by myomega.
-          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+        + rewrite lift_llift3 by mylia.
+          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
           rewrite llift_subst. cbn. reflexivity.
-        + rewrite lift_llift3 by myomega.
-          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+        + rewrite lift_llift3 by mylia.
+          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
           rewrite llift_subst. cbn. reflexivity.
       - cbn. eapply type_CongEq ; emh.
       - cbn. eapply type_CongRefl ; emh.
@@ -1251,8 +1253,8 @@ Proof.
           eapply meta_conv.
           * eapply type_Rel. eapply wf_rlift' ; eassumption.
           * erewrite safe_nth_lt. erewrite safe_nth_rlift.
-            rewrite lift_rlift3 by myomega.
-            f_equal. myomega.
+            rewrite lift_rlift3 by mylia.
+            f_equal. mylia.
         + case_eq (n <? #|Δ| + #|Γm|) ; intro e1 ; bprop e1.
           * erewrite safe_nth_ge'. erewrite safe_nth_lt.
             eapply type_ProjT2' ; try assumption.
@@ -1264,9 +1266,9 @@ Proof.
                cbn. f_equal.
                replace (S (n - #|rlift_context #|Γm| Δ|))
                  with ((S n) - #|Δ|)
-                 by (rewrite rlift_context_length ; myomega).
-               rewrite lift_rlift4 by myomega. f_equal.
-               ++ myomega.
+                 by (rewrite rlift_context_length ; mylia).
+               rewrite lift_rlift4 by mylia. f_equal.
+               ++ mylia.
                ++ f_equal. eapply safe_nth_cong_irr.
                   rewrite rlift_context_length. reflexivity.
           * erewrite safe_nth_ge'. erewrite safe_nth_ge'.
@@ -1274,47 +1276,47 @@ Proof.
             -- eapply type_Rel.
                eapply wf_rlift' ; eassumption.
             -- erewrite safe_nth_ge'. erewrite safe_nth_ge'.
-               rewrite lift_rlift5 by myomega.
+               rewrite lift_rlift5 by mylia.
                f_equal. eapply safe_nth_cong_irr.
-               rewrite rlift_context_length. rewrite (mix'_length2 hm). myomega.
+               rewrite rlift_context_length. rewrite (mix'_length2 hm). mylia.
       - cbn. eapply type_Sort. eapply wf_rlift' ; eassumption.
       - cbn. eapply type_Prod ; emh.
       - cbn. eapply type_Lambda ; emh.
-      - cbn. replace #|Δ| with (#|Δ| + 0)%nat by myomega.
+      - cbn. replace #|Δ| with (#|Δ| + 0)%nat by mylia.
         rewrite rlift_subst. cbn.
-        replace (#|Δ| + 0)%nat with #|Δ| by myomega.
+        replace (#|Δ| + 0)%nat with #|Δ| by mylia.
         eapply type_App ; emh.
       - cbn. eapply type_Sum ; emh.
       - cbn. eapply type_Pair ; emh.
-        replace #|Δ| with (#|Δ| + 0)%nat by myomega.
+        replace #|Δ| with (#|Δ| + 0)%nat by mylia.
         rewrite rlift_subst.
-        cbn. replace (#|Δ| + 0)%nat with #|Δ| by myomega.
+        cbn. replace (#|Δ| + 0)%nat with #|Δ| by mylia.
         reflexivity.
       - cbn. eapply type_Pi1 ; emh.
-      - cbn. replace #|Δ| with (#|Δ| + 0)%nat by myomega.
+      - cbn. replace #|Δ| with (#|Δ| + 0)%nat by mylia.
         rewrite rlift_subst.
-        cbn. replace (#|Δ| + 0)%nat with #|Δ| by myomega.
+        cbn. replace (#|Δ| + 0)%nat with #|Δ| by mylia.
         eapply type_Pi2 ; emh.
       - cbn. eapply type_Eq ; emh.
       - cbn. eapply type_Refl ; emh.
-      - cbn. replace #|Δ| with (#|Δ| + 0)%nat by myomega.
+      - cbn. replace #|Δ| with (#|Δ| + 0)%nat by mylia.
         rewrite rlift_subst.
-        replace (S #|Δ| + 0)%nat with (#|Δ| + 1)%nat by myomega.
+        replace (S #|Δ| + 0)%nat with (#|Δ| + 1)%nat by mylia.
         rewrite rlift_subst.
-        cbn. replace (#|Δ| + 0)%nat with #|Δ| by myomega.
-        replace (S (#|Δ| + 1))%nat with (S (S #|Δ|)) by myomega.
+        cbn. replace (#|Δ| + 0)%nat with #|Δ| by mylia.
+        replace (S (#|Δ| + 1))%nat with (S (S #|Δ|)) by mylia.
         eapply type_J ; emh.
         + cbn. unfold ssnoc. cbn. f_equal. f_equal.
-          * replace (S #|Δ|) with (1 + #|Δ|)%nat by myomega.
-            rewrite lift_rlift3 by myomega. reflexivity.
-          * replace (S #|Δ|) with (1 + #|Δ|)%nat by myomega.
-            rewrite lift_rlift3 by myomega. reflexivity.
-        + replace (S (S #|Δ|)) with ((S #|Δ|) + 1)%nat by myomega.
+          * replace (S #|Δ|) with (1 + #|Δ|)%nat by mylia.
+            rewrite lift_rlift3 by mylia. reflexivity.
+          * replace (S #|Δ|) with (1 + #|Δ|)%nat by mylia.
+            rewrite lift_rlift3 by mylia. reflexivity.
+        + replace (S (S #|Δ|)) with ((S #|Δ|) + 1)%nat by mylia.
           rewrite <- rlift_subst.
           change (sRefl (rlift #|Γm| #|Δ| A0) (rlift #|Γm| #|Δ| u))
             with (rlift #|Γm| #|Δ| (sRefl A0 u)).
-          replace (#|Δ| + 1)%nat with (S #|Δ| + 0)%nat by myomega.
-          rewrite <- rlift_subst. f_equal. myomega.
+          replace (#|Δ| + 1)%nat with (S #|Δ| + 0)%nat by mylia.
+          rewrite <- rlift_subst. f_equal. mylia.
       - cbn. eapply type_Transport ; emh.
       - cbn. eapply type_Heq ; emh.
       - cbn. eapply type_HeqToEq ; emh.
@@ -1326,95 +1328,95 @@ Proof.
       - cbn. eapply type_HeqTransport ; emh.
       - cbn. eapply type_CongProd ; emh.
         cbn. f_equal.
-        + rewrite lift_rlift3 by myomega.
-          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+        + rewrite lift_rlift3 by mylia.
+          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
           rewrite rlift_subst. cbn. reflexivity.
-        + rewrite lift_rlift3 by myomega.
-          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+        + rewrite lift_rlift3 by mylia.
+          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
           rewrite rlift_subst. cbn. reflexivity.
       - cbn. eapply type_CongLambda ; emh.
         + cbn. f_equal.
-          * rewrite lift_rlift3 by myomega.
-            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+          * rewrite lift_rlift3 by mylia.
+            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
             rewrite rlift_subst. cbn. reflexivity.
-          * rewrite lift_rlift3 by myomega.
-            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+          * rewrite lift_rlift3 by mylia.
+            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
             rewrite rlift_subst. cbn. reflexivity.
         + cbn. f_equal.
-          * rewrite lift_rlift3 by myomega.
-            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+          * rewrite lift_rlift3 by mylia.
+            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
             rewrite rlift_subst. cbn. reflexivity.
-          * rewrite lift_rlift3 by myomega.
-            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+          * rewrite lift_rlift3 by mylia.
+            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
             rewrite rlift_subst. cbn. reflexivity.
-          * rewrite lift_rlift3 by myomega.
-            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+          * rewrite lift_rlift3 by mylia.
+            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
             rewrite rlift_subst. cbn. reflexivity.
-          * rewrite lift_rlift3 by myomega.
-            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+          * rewrite lift_rlift3 by mylia.
+            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
             rewrite rlift_subst. cbn. reflexivity.
-      - cbn. replace #|Δ| with (#|Δ| + 0)%nat by myomega.
+      - cbn. replace #|Δ| with (#|Δ| + 0)%nat by mylia.
         rewrite 2!rlift_subst. cbn.
-        replace (#|Δ| + 0)%nat with #|Δ| by myomega.
+        replace (#|Δ| + 0)%nat with #|Δ| by mylia.
         eapply type_CongApp ; emh.
         cbn. f_equal.
-        + rewrite lift_rlift3 by myomega.
-          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+        + rewrite lift_rlift3 by mylia.
+          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
           rewrite rlift_subst. cbn. reflexivity.
-        + rewrite lift_rlift3 by myomega.
-          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+        + rewrite lift_rlift3 by mylia.
+          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
           rewrite rlift_subst. cbn. reflexivity.
       - cbn. eapply type_CongSum ; emh.
         cbn. f_equal.
-        + rewrite lift_rlift3 by myomega.
-          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+        + rewrite lift_rlift3 by mylia.
+          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
           rewrite rlift_subst. cbn. reflexivity.
-        + rewrite lift_rlift3 by myomega.
-          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+        + rewrite lift_rlift3 by mylia.
+          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
           rewrite rlift_subst. cbn. reflexivity.
       - cbn. eapply type_CongPair ; emh.
         + cbn. f_equal.
-          * rewrite lift_rlift3 by myomega.
-            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+          * rewrite lift_rlift3 by mylia.
+            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
             rewrite rlift_subst. cbn. reflexivity.
-          * rewrite lift_rlift3 by myomega.
-            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+          * rewrite lift_rlift3 by mylia.
+            replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
             rewrite rlift_subst. cbn. reflexivity.
         + cbn. f_equal.
-          * replace #|Δ| with (#|Δ| + 0)%nat by myomega.
+          * replace #|Δ| with (#|Δ| + 0)%nat by mylia.
             rewrite rlift_subst. cbn.
-            replace (#|Δ| + 0)%nat with #|Δ| by myomega.
+            replace (#|Δ| + 0)%nat with #|Δ| by mylia.
             reflexivity.
-          * replace #|Δ| with (#|Δ| + 0)%nat by myomega.
+          * replace #|Δ| with (#|Δ| + 0)%nat by mylia.
             rewrite rlift_subst. cbn.
-            replace (#|Δ| + 0)%nat with #|Δ| by myomega.
+            replace (#|Δ| + 0)%nat with #|Δ| by mylia.
             reflexivity.
-        + replace #|Δ| with (#|Δ| + 0)%nat by myomega.
+        + replace #|Δ| with (#|Δ| + 0)%nat by mylia.
           rewrite rlift_subst. cbn.
-          replace (#|Δ| + 0)%nat with #|Δ| by myomega.
+          replace (#|Δ| + 0)%nat with #|Δ| by mylia.
           reflexivity.
-        + replace #|Δ| with (#|Δ| + 0)%nat by myomega.
+        + replace #|Δ| with (#|Δ| + 0)%nat by mylia.
           rewrite rlift_subst. cbn.
-          replace (#|Δ| + 0)%nat with #|Δ| by myomega.
+          replace (#|Δ| + 0)%nat with #|Δ| by mylia.
           reflexivity.
       - cbn. eapply type_CongPi1 ; emh.
         cbn. f_equal.
-        + rewrite lift_rlift3 by myomega.
-          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+        + rewrite lift_rlift3 by mylia.
+          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
           rewrite rlift_subst. cbn. reflexivity.
-        + rewrite lift_rlift3 by myomega.
-          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+        + rewrite lift_rlift3 by mylia.
+          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
           rewrite rlift_subst. cbn. reflexivity.
-      - cbn. replace #|Δ| with (#|Δ| + 0)%nat by myomega.
+      - cbn. replace #|Δ| with (#|Δ| + 0)%nat by mylia.
         rewrite 2!rlift_subst. cbn.
-        replace (#|Δ| + 0)%nat with #|Δ| by myomega.
+        replace (#|Δ| + 0)%nat with #|Δ| by mylia.
         eapply type_CongPi2 ; emh.
         cbn. f_equal.
-        + rewrite lift_rlift3 by myomega.
-          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+        + rewrite lift_rlift3 by mylia.
+          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
           rewrite rlift_subst. cbn. reflexivity.
-        + rewrite lift_rlift3 by myomega.
-          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by myomega.
+        + rewrite lift_rlift3 by mylia.
+          replace (S #|Δ|) with ((S #|Δ|) + 0)%nat by mylia.
           rewrite rlift_subst. cbn. reflexivity.
       - cbn. eapply type_CongEq ; emh.
       - cbn. eapply type_CongRefl ; emh.
@@ -1463,7 +1465,7 @@ Proof.
        try rewrite !llift_context_length ;
        try rewrite !rlift_context_length ;
        try rewrite !length_cat in isdecl ;
-       try myomega.
+       try mylia.
 Defined.
 
 Lemma ismix_ismix' :
@@ -1561,11 +1563,11 @@ Proof.
       set (is2' := gt_le_S x #|Γ2| (gt_S_le (S x) #|Γ2| is2)).
       destruct (IHhm x is1' is2') as [s' [h1 h2]].
       exists s'. split.
-      * replace (S (S x)) with (1 + (S x))%nat by myomega.
-        rewrite <- liftP3 with (k := 0) by myomega.
+      * replace (S (S x)) with (1 + (S x))%nat by mylia.
+        rewrite <- liftP3 with (k := 0) by mylia.
         eapply @typing_lift01 with (A := sSort s') ; eassumption.
-      * replace (S (S x)) with (1 + (S x))%nat by myomega.
-        rewrite <- liftP3 with (k := 0) by myomega.
+      * replace (S (S x)) with (1 + (S x))%nat by mylia.
+        rewrite <- liftP3 with (k := 0) by mylia.
         eapply @typing_lift01 with (A := sSort s') ; eassumption.
 Defined.
 
@@ -1634,24 +1636,24 @@ Proof.
   intro t. induction t ; intros γ l.
   all: try (cbn ; f_equal ; easy).
   unfold llift.
-  case_eq (n <? S l) ; intro e ; bprop e ; try myomega.
-  - case_eq (n <? l) ; intro e1 ; bprop e1 ; try myomega.
-    + unfold lift. case_eq (S l <=? n) ; intro e3 ; bprop e3 ; try myomega.
-      cbn. case_eq (l ?= n) ; intro e5 ; bprop e5 ; try myomega.
+  case_eq (n <? S l) ; intro e ; bprop e ; try mylia.
+  - case_eq (n <? l) ; intro e1 ; bprop e1 ; try mylia.
+    + unfold lift. case_eq (S l <=? n) ; intro e3 ; bprop e3 ; try mylia.
+      cbn. case_eq (l ?= n) ; intro e5 ; bprop e5 ; try mylia.
       reflexivity.
-    + case_eq (n <? l + S γ) ; intro e3 ; bprop e3 ; try myomega.
-      unfold lift. case_eq (S l <=? n) ; intro e5 ; bprop e5 ; try myomega.
-      cbn. case_eq (l ?= n) ; intro e7 ; bprop e7 ; try myomega.
-      f_equal. f_equal. myomega.
-  - case_eq (n <? l) ; intro e1 ; bprop e1 ; try myomega.
-    case_eq (n <? S l + γ) ; intro e3 ; bprop e3 ; try myomega.
-    + case_eq (n <? l + S γ) ; intro e5 ; bprop e5 ; try myomega.
-      unfold lift. case_eq (S l <=? n) ; intro e7 ; bprop e7 ; try myomega.
-      cbn. case_eq (l ?= S n) ; intro e9 ; bprop e9 ; try myomega.
+    + case_eq (n <? l + S γ) ; intro e3 ; bprop e3 ; try mylia.
+      unfold lift. case_eq (S l <=? n) ; intro e5 ; bprop e5 ; try mylia.
+      cbn. case_eq (l ?= n) ; intro e7 ; bprop e7 ; try mylia.
+      f_equal. f_equal. mylia.
+  - case_eq (n <? l) ; intro e1 ; bprop e1 ; try mylia.
+    case_eq (n <? S l + γ) ; intro e3 ; bprop e3 ; try mylia.
+    + case_eq (n <? l + S γ) ; intro e5 ; bprop e5 ; try mylia.
+      unfold lift. case_eq (S l <=? n) ; intro e7 ; bprop e7 ; try mylia.
+      cbn. case_eq (l ?= S n) ; intro e9 ; bprop e9 ; try mylia.
       reflexivity.
-    + case_eq (n <? l + S γ) ; intro e5 ; bprop e5 ; try myomega.
-      unfold lift. case_eq (S l <=? n) ; intro e7 ; bprop e7 ; try myomega.
-      cbn. case_eq (l ?= S n) ; intro e9 ; bprop e9 ; try myomega.
+    + case_eq (n <? l + S γ) ; intro e5 ; bprop e5 ; try mylia.
+      unfold lift. case_eq (S l <=? n) ; intro e7 ; bprop e7 ; try mylia.
+      cbn. case_eq (l ?= S n) ; intro e9 ; bprop e9 ; try mylia.
       reflexivity.
 Defined.
 
@@ -1662,24 +1664,24 @@ Proof.
   intro t. induction t ; intros γ l.
   all: try (cbn ; f_equal ; easy).
   unfold rlift.
-  case_eq (n <? S l) ; intro e ; bprop e ; try myomega.
-  - case_eq (n <? l) ; intro e1 ; bprop e1 ; try myomega.
-    + unfold lift. case_eq (S l <=? n) ; intro e3 ; bprop e3 ; try myomega.
-      cbn. case_eq (l ?= n) ; intro e5 ; bprop e5 ; try myomega.
+  case_eq (n <? S l) ; intro e ; bprop e ; try mylia.
+  - case_eq (n <? l) ; intro e1 ; bprop e1 ; try mylia.
+    + unfold lift. case_eq (S l <=? n) ; intro e3 ; bprop e3 ; try mylia.
+      cbn. case_eq (l ?= n) ; intro e5 ; bprop e5 ; try mylia.
       reflexivity.
-    + case_eq (n <? l + S γ) ; intro e3 ; bprop e3 ; try myomega.
-      unfold lift. case_eq (S l <=? n) ; intro e5 ; bprop e5 ; try myomega.
-      cbn. case_eq (l ?= n) ; intro e7 ; bprop e7 ; try myomega.
-      f_equal. f_equal. myomega.
-  - case_eq (n <? l) ; intro e1 ; bprop e1 ; try myomega.
-    case_eq (n <? S l + γ) ; intro e3 ; bprop e3 ; try myomega.
-    + case_eq (n <? l + S γ) ; intro e5 ; bprop e5 ; try myomega.
-      unfold lift. case_eq (S l <=? n) ; intro e7 ; bprop e7 ; try myomega.
-      cbn. case_eq (l ?= S n) ; intro e9 ; bprop e9 ; try myomega.
+    + case_eq (n <? l + S γ) ; intro e3 ; bprop e3 ; try mylia.
+      unfold lift. case_eq (S l <=? n) ; intro e5 ; bprop e5 ; try mylia.
+      cbn. case_eq (l ?= n) ; intro e7 ; bprop e7 ; try mylia.
+      f_equal. f_equal. mylia.
+  - case_eq (n <? l) ; intro e1 ; bprop e1 ; try mylia.
+    case_eq (n <? S l + γ) ; intro e3 ; bprop e3 ; try mylia.
+    + case_eq (n <? l + S γ) ; intro e5 ; bprop e5 ; try mylia.
+      unfold lift. case_eq (S l <=? n) ; intro e7 ; bprop e7 ; try mylia.
+      cbn. case_eq (l ?= S n) ; intro e9 ; bprop e9 ; try mylia.
       reflexivity.
-    + case_eq (n <? l + S γ) ; intro e5 ; bprop e5 ; try myomega.
-      unfold lift. case_eq (S l <=? n) ; intro e7 ; bprop e7 ; try myomega.
-      cbn. case_eq (l ?= S n) ; intro e9 ; bprop e9 ; try myomega.
+    + case_eq (n <? l + S γ) ; intro e5 ; bprop e5 ; try mylia.
+      unfold lift. case_eq (S l <=? n) ; intro e7 ; bprop e7 ; try mylia.
+      cbn. case_eq (l ?= S n) ; intro e9 ; bprop e9 ; try mylia.
       reflexivity.
 Defined.
 

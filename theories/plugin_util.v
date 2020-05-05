@@ -1,17 +1,18 @@
 (* Utility library for plugin *)
 
-Require Import TypingFlags.Loader.
-Set Type In Type.
+Unset Universe Checking.
 
-From Coq Require Import Bool String List BinPos Compare_dec Omega.
-From Equations Require Import Equations DepElimDec.
-From Template Require Import All.
+From Coq Require Import Bool String List BinPos Compare_dec Lia Arith.
+Require Import Equations.Prop.DepElim.
+From Equations Require Import Equations.
+From MetaCoq Require Import All.
 From Translation
 Require Import util Sorts SAst SLiftSubst SCommon ITyping ITypingLemmata
 ITypingAdmissible DecideConversion XTyping Quotes Translation FundamentalLemma
 FinalTranslation FullQuote XTypingLemmata IChecking
 XChecking Equality.
 Import MonadNotation.
+Import ListNotations.
 
 Open Scope string_scope.
 Open Scope x_scope.
@@ -176,11 +177,11 @@ Proof.
   intro Σ. induction Σ ; intros id ty d h hf.
   - cbn in h. discriminate h.
   - cbn in h. dependent destruction hf.
-    case_eq (ident_eq id (dname d0)) ;
+    case_eq (ident_eq id (dname a)) ;
     intro e ; rewrite e in h.
     + inversion h as [ h' ]. subst. clear h.
       destruct (ident_eq_spec id (dname d)).
-      * subst. destruct (ident_eq_spec (dname d) (dname d0)).
+      * subst. destruct (ident_eq_spec (dname d) (dname a)).
         -- exfalso. easy.
         -- easy.
       * reflexivity.
@@ -194,7 +195,7 @@ Proof.
   revert l.
   induction n; intros [|a l] H; auto.
   - inversion H.
-  - simpl in *. apply IHn. myomega.
+  - simpl in *. apply IHn. mylia.
 Defined.
 
 Open Scope nat_scope.
@@ -225,10 +226,11 @@ Definition some_inj (A : Type) (x y : A) (H : Some x = Some y) : x = y :=
              end) H.
 
 Lemma nth_error_Some_safe_nth A (l : list A) n c :
-  forall e : nth_error l n = Some c, safe_nth l (exist _ n (nth_error_isdecl e)) = c.
+  forall e : nth_error l n = Some c,
+    safe_nth l (exist _ n (nth_error_Some_length e)) = c.
 Proof.
   intros H.
-  pose proof (nth_error_safe_nth _ _ (nth_error_isdecl H)).
+  pose proof (nth_error_safe_nth _ _ (nth_error_Some_length H)).
   pose proof (eq_trans (eq_sym H) H0).
   apply some_inj in H1. exact (eq_sym H1).
 Defined.

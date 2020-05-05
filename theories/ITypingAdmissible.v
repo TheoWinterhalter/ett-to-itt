@@ -1,9 +1,11 @@
-From Coq Require Import Bool String List BinPos Compare_dec Omega.
-From Equations Require Import Equations DepElimDec.
-From Template Require Import Ast utils Typing.
+From Coq Require Import Bool String List BinPos Compare_dec Lia Arith.
+Require Import Equations.Prop.DepElim.
+From Equations Require Import Equations.
+From MetaCoq Require Import Ast utils Typing.
 From Translation
 Require Import util Sorts SAst SLiftSubst SCommon Conversion ITyping
                ITypingInversions ITypingLemmata Uniqueness SubjectReduction.
+Import ListNotations.
 
 Section Admissible.
 
@@ -33,11 +35,11 @@ Proof.
   intros Σ Γ s1 s2 A B p hg h.
   destruct (istype_type hg h) as [? i].
   ttinv i.
-  ttinv h0. ttinv h5.
-  pose proof (conv_trans h1 (conv_sym h6)) as eq.
+  ttinv h1. ttinv h0.
+  pose proof (conv_trans h4 (conv_sym h6)) as eq.
   pose proof (sort_conv_inv eq).
   assert (s1 = s2) by (apply succ_inj ; assumption).
-  subst. clear eq H h1 h6.
+  subst.
   assumption.
 Defined.
 
@@ -115,7 +117,7 @@ Proof.
   eapply type_conv.
   - eassumption.
   - eapply type_Sort. eapply typing_wf ; eassumption.
-  - apply (uniqueness hg h0 h6).
+  - apply (uniqueness hg h7 h).
 Defined.
 
 Lemma type_HeqTransport' :
@@ -451,8 +453,8 @@ Proof.
   destruct (istype_type hg hpA) as [? ipA]. ttinv ipA.
   destruct (istype_type hg hpB) as [? ipB]. ttinv ipB.
   destruct (istype_type hg hpp) as [? ipp]. ttinv ipp.
-  pose proof (sorts_in_sort h h4). subst.
-  pose proof (sorts_in_sort h0 h9). subst.
+  pose proof (sorts_in_sort h5 h3). subst.
+  pose proof (sorts_in_sort h0 h). subst.
   eapply type_CongPi1'' ; eassumption.
 Defined.
 
@@ -495,8 +497,8 @@ Proof.
   destruct (istype_type hg hpA) as [? ipA]. ttinv ipA.
   destruct (istype_type hg hpB) as [? ipB]. ttinv ipB.
   destruct (istype_type hg hpp) as [? ipp]. ttinv ipp.
-  pose proof (sorts_in_sort h h4). subst.
-  pose proof (sorts_in_sort h0 h9). subst.
+  pose proof (sorts_in_sort h5 h3). subst.
+  pose proof (sorts_in_sort h0 h). subst.
   eapply type_CongPi2'' ; eassumption.
 Defined.
 
@@ -532,7 +534,7 @@ Proof.
   destruct (istype_type hg hpA) as [? iA]. ttinv iA.
   destruct (istype_type hg hpu) as [? iu]. ttinv iu.
   destruct (istype_type hg hpv) as [? iv]. ttinv iv.
-  pose proof (sorts_in_sort h h4). subst.
+  pose proof (sorts_in_sort h0 h). subst.
   eapply type_CongEq''.
   all: assumption.
 Defined.
@@ -644,7 +646,7 @@ Proof.
   intros Σ Γ A u B v p s hg hp hA.
   destruct (istype_type hg hp) as [? i]. ttinv i.
   eapply type_HeqTypeEq ; try eassumption.
-  pose proof (uniqueness hg h hA).
+  pose proof (uniqueness hg h0 hA).
   eapply type_conv ; try eassumption.
   eapply type_Sort. eapply typing_wf. eassumption.
 Defined.

@@ -1,7 +1,7 @@
 (*! Notion of sort *)
 
-From Coq Require Import Bool String List BinPos Compare_dec Omega.
-From Template Require Import Ast.
+From Coq Require Import Bool String List BinPos Compare_dec Lia Arith.
+From MetaCoq Require Import Ast.
 From Translation Require Import util.
 
 (* We define a notion of Sorts, reminiscent of that of a functional PTS *)
@@ -15,7 +15,7 @@ Class notion := {
   succ_inj : forall s z, succ s = succ z -> s = z
 }.
 
-Local Instance nat_sorts : notion := {|
+#[refine] Local Instance nat_sorts : notion := {|
   sort := nat ;
   succ := S ;
   prod_sort := Nat.max ;
@@ -27,7 +27,7 @@ Proof.
   intros s z e. auto with arith.
 Defined.
 
-Local Instance type_in_type : notion := {|
+#[refine] Local Instance type_in_type : notion := {|
   sort := unit ;
   succ u := u ;
   prod_sort u v := tt ;
@@ -40,10 +40,10 @@ Proof.
 Defined.
 
 Inductive univ := sType (n : nat) | sProp.
-Local Instance fixed_sorts : notion := {|
+#[refine] Local Instance fixed_sorts : notion := {|
   sort := univ ;
-  succ s := 
-    match s with 
+  succ s :=
+    match s with
     | sType n => sType (S n)
     | sProp => sProp
     end ;
@@ -69,10 +69,10 @@ Proof.
 Defined.
 
 Inductive twolevel := F (n : nat) | U (n : nat).
-Local Instance twolevel_sorts : notion := {|
+#[refine] Local Instance twolevel_sorts : notion := {|
   sort := twolevel ;
-  succ s := 
-    match s with 
+  succ s :=
+    match s with
     | U n => U (S n)
     | F n => F (S n)
     end ;

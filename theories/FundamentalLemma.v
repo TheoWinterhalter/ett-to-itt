@@ -1,10 +1,12 @@
-From Coq Require Import Bool String List BinPos Compare_dec Omega.
-From Equations Require Import Equations DepElimDec.
-From Template Require Import Ast utils Typing.
+From Coq Require Import Bool String List BinPos Compare_dec Lia Arith.
+Require Import Equations.Prop.DepElim.
+From Equations Require Import Equations.
+From MetaCoq Require Import Ast utils Typing.
 From Translation
 Require Import util Sorts SAst SLiftSubst Equality SCommon XTyping Conversion ITyping
                ITypingInversions ITypingLemmata ITypingAdmissible Optim
                Uniqueness SubjectReduction PackLifts.
+Import ListNotations.
 
 Open Scope type_scope.
 Open Scope x_scope.
@@ -254,7 +256,7 @@ Proof.
       exists (sProjTe (sRel x)).
       intros Γm U1 U2 hm h1 h2.
       unfold llift at 2. unfold rlift at 2.
-      case_eq (x <? 0) ; intro e ; bprop e ; try myomega. clear e2.
+      case_eq (x <? 0) ; intro e ; bprop e ; try mylia. clear e2.
       pose proof (mix_length1 hm) as ml. rewrite <- ml in e0, e1.
       change (0 + #|Γm|)%nat with #|Γm|.
       rewrite e0.
@@ -296,10 +298,10 @@ Proof.
       * erewrite safe_nth_lt. erewrite safe_nth_mix by eassumption.
         cbn. apply cong_Pack.
         -- rewrite lift_llift.
-           replace (S x + (#|Γm| - S x))%nat with #|Γm| by myomega.
+           replace (S x + (#|Γm| - S x))%nat with #|Γm| by mylia.
            eapply llift_conv. eassumption.
         -- rewrite lift_rlift.
-           replace (S x + (#|Γm| - S x))%nat with #|Γm| by myomega.
+           replace (S x + (#|Γm| - S x))%nat with #|Γm| by mylia.
            eapply rlift_conv. eassumption.
     + (* Unless it is ill-typed, the variable is in Γ, reflexivity will do.
          To type reflexivity properly we still need a proof that
@@ -312,19 +314,21 @@ Proof.
         exists (sHeqRefl A (sRel x)).
         intros Γm U1 U2 hm h1 h2.
         unfold llift at 2. unfold rlift at 2.
-        case_eq (x <? 0) ; intro e ; bprop e ; try myomega. clear e2.
+        case_eq (x <? 0) ; intro e ; bprop e ; try mylia. clear e2.
         pose proof (mix_length1 hm) as ml. rewrite <- ml in e0, e1.
         change (0 + #|Γm|)%nat with #|Γm|.
         rewrite e0.
         (* Now for the specifics *)
         assert (h1' : Σ ;;; Γ ,,, Γm |-i sRel x : llift0 #|Γm| U1).
-        { replace (sRel x) with (llift0 #|Γm| (sRel x))
-            by (unfold llift ; rewrite e ; rewrite e0 ; reflexivity).
+        { replace (sRel x) with (llift0 #|Γm| (sRel x)).
+          2:{
+            unfold llift. rewrite e. simpl. rewrite e0. reflexivity.
+          }
           eapply type_llift0 ; eassumption.
         }
         assert (h2' : Σ ;;; Γ ,,, Γm |-i sRel x : rlift0 #|Γm| U2).
         { replace (sRel x) with (rlift0 #|Γm| (sRel x))
-            by (unfold rlift ; rewrite e ; rewrite e0 ; reflexivity).
+            by (unfold rlift ; rewrite e ; simpl ; rewrite e0 ; reflexivity).
           eapply type_rlift0 ; eassumption.
         }
         pose proof (uniqueness hg h1' h2').
@@ -335,7 +339,7 @@ Proof.
            subst y A. revert isdecl0. rewrite <- ml. intro isdecl0.
            eapply meta_conv.
            ++ eapply type_Rel. eapply typing_wf. eassumption.
-           ++ erewrite @safe_nth_ge with (isdecl' := isdecl0) by myomega.
+           ++ erewrite @safe_nth_ge with (isdecl' := isdecl0) by mylia.
               reflexivity.
         -- eapply type_Heq ; try eassumption.
            eapply type_conv ; try eassumption.
@@ -346,19 +350,19 @@ Proof.
            ++ eapply conv_trans ; try eassumption.
               subst y A. revert isdecl0. rewrite <- ml. intro isdecl0.
               apply conv_eq. f_equal. f_equal.
-              erewrite @safe_nth_ge with (isdecl' := isdecl0) by myomega.
+              erewrite @safe_nth_ge with (isdecl' := isdecl0) by mylia.
               reflexivity.
            ++ eapply conv_trans ; try eassumption.
               subst y A. revert isdecl0. rewrite <- ml. intro isdecl0.
               apply conv_eq. f_equal. f_equal.
-              erewrite @safe_nth_ge with (isdecl' := isdecl0) by myomega.
+              erewrite @safe_nth_ge with (isdecl' := isdecl0) by mylia.
               reflexivity.
       * (* In case the variable isn't in the context at all,
            it is bound to be ill-typed and we can return garbage.
          *)
         exists (sRel 0).
         intros Γm U1 U2 hm h1 h2.
-        exfalso. ttinv h1. clear h. rewrite length_cat in is. myomega.
+        exfalso. ttinv h1. clear h. rewrite length_cat in is. mylia.
 
   (* Left transport *)
   - destruct (IHsim Γ Γ1 Γ2) as [q hq].
@@ -366,9 +370,9 @@ Proof.
     intros Γm U1 U2 hm h1 h2.
     pose proof (mix_length1 hm) as ml. rewrite <- ml.
     ttinv h1.
-    specialize (hq _ _ _ hm h6 h2).
+    specialize (hq _ _ _ hm h h2).
     destruct (istype_type hg hq) as [s' h'].
-    ttinv h'. pose proof (sort_conv_inv h8). subst. clear h8.
+    ttinv h'. pose proof (sort_conv_inv h11). subst. clear h11.
     eapply opt_HeqTrans ; try assumption.
     + eapply opt_HeqSym ; try assumption.
       eapply type_conv.
@@ -403,9 +407,9 @@ Proof.
     intros Γm U1 U2 hm h1 h2.
     pose proof (mix_length1 hm) as ml. rewrite <- ml.
     ttinv h2.
-    specialize (hq _ _ _ hm h1 h6).
+    specialize (hq _ _ _ hm h1 h).
     destruct (istype_type hg hq) as [s' h'].
-    ttinv h'. pose proof (sort_conv_inv h8). subst. clear h8.
+    ttinv h'. pose proof (sort_conv_inv h11). subst. clear h11.
     cbn.
     eapply opt_HeqTrans ; try assumption.
     + eassumption.
@@ -439,11 +443,11 @@ Proof.
     intros Γm U1 U2 hm h1 h2.
     pose proof (mix_length1 hm) as ml. rewrite <- ml.
     ttinv h1. ttinv h2.
-    specialize (hpA _ _ _ hm h h0).
+    specialize (hpA _ _ _ hm h0 h5).
     destruct (istype_type hg hpA) as [s iA].
-    ttinv iA. pose proof (sort_conv_inv h9). subst. clear h9.
+    ttinv iA. pose proof (sort_conv_inv h12). subst. clear h12.
     assert (s1 = s0).
-    { cbn in h12, h5. eapply sorts_in_sort ; eassumption. }
+    { eapply sorts_in_sort ; eassumption. }
     subst.
     assert (hm' :
               ismix Σ Γ
@@ -452,11 +456,11 @@ Proof.
                     (Γm ,, (sPack (llift0 #|Γm| A1) (rlift0 #|Γm| A2)))
     ).
     { econstructor ; eassumption. }
-    specialize (hpB _ _ _ hm' h4 h7).
+    specialize (hpB _ _ _ hm' h h3).
     destruct (istype_type hg hpB) as [? iB]. ttinv iB.
-    pose proof (sort_conv_inv h13) as hh. symmetry in hh. subst. clear h13.
+    pose proof (sort_conv_inv h16) as hh. symmetry in hh. subst. clear h16.
     assert (s3 = s2).
-    { cbn in h16, h8. eapply sorts_in_sort ; eassumption. }
+    { eapply sorts_in_sort ; eassumption. }
     subst.
     destruct (istype_type hg h1).
     destruct (istype_type hg h2).
@@ -499,11 +503,11 @@ Proof.
     intros Γm U1 U2 hm h1 h2.
     pose proof (mix_length1 hm) as ml. rewrite <- ml.
     ttinv h1. ttinv h2.
-    specialize (hpA _ _ _ hm h h0).
+    specialize (hpA _ _ _ hm h0 h5).
     destruct (istype_type hg hpA) as [s iA].
-    ttinv iA. pose proof (sort_conv_inv h9). subst. clear h9.
+    ttinv iA. pose proof (sort_conv_inv h12). subst. clear h12.
     assert (s1 = s0).
-    { cbn in h12, h5. eapply sorts_in_sort ; eassumption. }
+    { eapply sorts_in_sort ; eassumption. }
     subst.
     assert (hm' :
               ismix Σ Γ
@@ -512,11 +516,11 @@ Proof.
                     (Γm ,, (sPack (llift0 #|Γm| A1) (rlift0 #|Γm| A2)))
     ).
     { econstructor ; eassumption. }
-    specialize (hpB _ _ _ hm' h4 h7).
+    specialize (hpB _ _ _ hm' h h3).
     destruct (istype_type hg hpB) as [? iB]. ttinv iB.
-    pose proof (sort_conv_inv h13) as hh. symmetry in hh. subst. clear h13.
+    pose proof (sort_conv_inv h16) as hh. symmetry in hh. subst. clear h16.
     assert (s3 = s2).
-    { cbn in h16, h8. eapply sorts_in_sort ; eassumption. }
+    { eapply sorts_in_sort ; eassumption. }
     subst.
     destruct (istype_type hg h1).
     destruct (istype_type hg h2).
@@ -560,12 +564,12 @@ Proof.
     intros Γm U1 U2 hm h1 h2.
     ttinv h1. ttinv h2.
     specialize (hpA _ _ _ hm h0 h6).
-    specialize (hpu _ _ _ hm h5 h9).
-    specialize (hpv _ _ _ hm h4 h8).
+    specialize (hpu _ _ _ hm h h4).
+    specialize (hpv _ _ _ hm h3 h7).
     destruct (istype_type hg hpA) as [? ipA]. ttinv ipA.
-    apply conv_sym in h11. pose proof (sort_conv_inv h11). subst. clear h11.
+    apply conv_sym in h14. pose proof (sort_conv_inv h14). subst. clear h14.
     assert (s0 = s).
-    { cbn in h, h14. eapply sorts_in_sort ; eassumption. }
+    { eapply sorts_in_sort ; eassumption. }
     subst.
     eapply type_conv.
     + eapply opt_CongEq ; eassumption.
@@ -640,9 +644,9 @@ Proof.
     ttinv h1. ttinv h2.
     specialize (hpA _ _ _ hm h0 h6).
     destruct (istype_type hg hpA) as [? iA]. ttinv iA.
-    pose proof (sort_conv_inv h11). subst. clear h11.
+    pose proof (sort_conv_inv h14). subst. clear h14.
     assert (s1 = s0).
-    { cbn in h12, h5. eapply sorts_in_sort ; eassumption. }
+    { eapply sorts_in_sort ; eassumption. }
     subst.
     assert (hm' :
               ismix Σ Γ
@@ -651,12 +655,12 @@ Proof.
                     (Γm ,, (sPack (llift0 #|Γm| A1) (rlift0 #|Γm| A2)))
     ).
     { econstructor ; eassumption. }
-    specialize (hpB _ _ _ hm' h5 h9).
-    specialize (hpu _ _ _ hm' h4 h8).
+    specialize (hpB _ _ _ hm' h h4).
+    specialize (hpu _ _ _ hm' h3 h7).
     assert (s3 = s2).
     { destruct (istype_type hg hpB) as [? ipB]. ttinv ipB.
-      apply conv_sym in h15. pose proof (sort_conv_inv h15). subst. clear h15.
-      cbn in h10, h18. eapply sorts_in_sort ; eassumption.
+      apply conv_sym in h18. pose proof (sort_conv_inv h18). subst. clear h18.
+      eapply sorts_in_sort ; eassumption.
     } subst.
     eapply type_conv.
     + eapply opt_CongLambda ; try assumption.
@@ -718,12 +722,13 @@ Proof.
     intros Γm U1 U2 hm h1 h2.
     pose proof (mix_length1 hm) as ml. rewrite <- ml.
     ttinv h1. ttinv h2.
-    specialize (hpu _ _ _ hm h5 h10).
-    specialize (hpA _ _ _ hm h h0).
+    specialize (hpu _ _ _ hm h3 h8).
+    specialize (hpA _ _ _ hm h0 h7).
     destruct (istype_type hg hpA) as [? iA].
-    ttinv iA. pose proof (sort_conv_inv h13) as hh. symmetry in hh. subst. clear h13.
+    ttinv iA. pose proof (sort_conv_inv h16) as hh. symmetry in hh. subst.
+    clear h16.
     assert (s1 = s0).
-    { cbn in h7, h16. eapply sorts_in_sort ; eassumption. }
+    { eapply sorts_in_sort ; eassumption. }
     subst.
     assert (hm' :
               ismix Σ Γ
@@ -732,12 +737,12 @@ Proof.
                     (Γm ,, (sPack (llift0 #|Γm| A1) (rlift0 #|Γm| A2)))
     ).
     { econstructor ; eassumption. }
-    specialize (hpB _ _ _ hm' h6 h11).
+    specialize (hpB _ _ _ hm' h h5).
     specialize (hpv _ _ _ hm h4 h9).
     assert (s3 = s2).
     { destruct (istype_type hg hpB) as [? ipB]. ttinv ipB.
-      apply conv_sym in h17. pose proof (sort_conv_inv h17). subst. clear h17.
-      cbn in h10, h18. eapply sorts_in_sort ; eassumption.
+      apply conv_sym in h20. pose proof (sort_conv_inv h20). subst. clear h20.
+      eapply sorts_in_sort ; eassumption.
     } subst.
     eapply type_conv.
     + eapply opt_CongApp ; try assumption.
@@ -787,10 +792,10 @@ Proof.
     intros Γm U1 U2 hm h1 h2.
     pose proof (mix_length1 hm) as ml. rewrite <- ml.
     ttinv h1. ttinv h2.
-    specialize (hpA _ _ _ hm h h0).
+    specialize (hpA _ _ _ hm h0 h7).
     destruct (istype_type hg hpA) as [? iA].
-    ttinv iA. pose proof (sort_conv_inv h13) as hh. symmetry in hh. subst.
-    clear h13.
+    ttinv iA. pose proof (sort_conv_inv h16) as hh. symmetry in hh. subst.
+    clear h16.
     assert (s1 = s0).
     { eapply sorts_in_sort ; eassumption. }
     subst.
@@ -801,13 +806,13 @@ Proof.
                     (Γm ,, (sPack (llift0 #|Γm| A1) (rlift0 #|Γm| A2)))
     ).
     { econstructor ; eassumption. }
-    specialize (hpB _ _ _ hm' h6 h11).
+    specialize (hpB _ _ _ hm' h h5).
     assert (s3 = s2).
     { destruct (istype_type hg hpB) as [? ipB]. ttinv ipB.
-      apply conv_sym in h17. pose proof (sort_conv_inv h17). subst. clear h15.
+      apply conv_sym in h20. pose proof (sort_conv_inv h20). subst. clear h20.
       eapply sorts_in_sort ; eassumption.
     } subst.
-    specialize (hpu _ _ _ hm h5 h10).
+    specialize (hpu _ _ _ hm h3 h8).
     specialize (hpv _ _ _ hm h4 h9).
     eapply type_conv.
     + eapply type_CongPair' ; try assumption.
@@ -815,7 +820,7 @@ Proof.
       * rewrite llift_substProj, rlift_substProj.
         apply hpB.
       * apply hpu.
-      * replace 0 with (0 + 0)%nat in hpv by myomega.
+      * replace 0 with (0 + 0)%nat in hpv by mylia.
         rewrite llift_subst, rlift_subst in hpv.
         apply hpv.
       * lift_sort. eapply (@type_llift1 Sort_notion) ; eassumption.
@@ -867,10 +872,10 @@ Proof.
     intros Γm U1 U2 hm h1 h2.
     pose proof (mix_length1 hm) as ml. rewrite <- ml.
     ttinv h1. ttinv h2.
-    specialize (hpA _ _ _ hm h5 h9).
+    specialize (hpA _ _ _ hm h h4).
     destruct (istype_type hg hpA) as [? iA].
-    ttinv iA. pose proof (sort_conv_inv h11) as hh. symmetry in hh. subst.
-    clear h11.
+    ttinv iA. pose proof (sort_conv_inv h14) as hh. symmetry in hh. subst.
+    clear h14.
     assert (s1 = s0).
     { eapply sorts_in_sort ; eassumption. }
     subst.
@@ -881,10 +886,10 @@ Proof.
                     (Γm ,, (sPack (llift0 #|Γm| A1) (rlift0 #|Γm| A2)))
     ).
     { econstructor ; eassumption. }
-    specialize (hpB _ _ _ hm' h4 h8).
+    specialize (hpB _ _ _ hm' h3 h7).
     assert (s3 = s2).
     { destruct (istype_type hg hpB) as [? ipB]. ttinv ipB.
-      apply conv_sym in h15. pose proof (sort_conv_inv h15). subst. clear h15.
+      apply conv_sym in h18. pose proof (sort_conv_inv h18). subst. clear h18.
       eapply sorts_in_sort ; eassumption.
     } subst.
     specialize (hpp _ _ _ hm h0 h6).
@@ -927,10 +932,10 @@ Proof.
     intros Γm U1 U2 hm h1 h2.
     pose proof (mix_length1 hm) as ml. rewrite <- ml.
     ttinv h1. ttinv h2.
-    specialize (hpA _ _ _ hm h5 h9).
+    specialize (hpA _ _ _ hm h h4).
     destruct (istype_type hg hpA) as [? iA].
-    ttinv iA. pose proof (sort_conv_inv h11) as hh. symmetry in hh. subst.
-    clear h11.
+    ttinv iA. pose proof (sort_conv_inv h14) as hh. symmetry in hh. subst.
+    clear h14.
     assert (s1 = s0).
     { eapply sorts_in_sort ; eassumption. }
     subst.
@@ -941,10 +946,10 @@ Proof.
                     (Γm ,, (sPack (llift0 #|Γm| A1) (rlift0 #|Γm| A2)))
     ).
     { econstructor ; eassumption. }
-    specialize (hpB _ _ _ hm' h4 h8).
+    specialize (hpB _ _ _ hm' h3 h7).
     assert (s3 = s2).
     { destruct (istype_type hg hpB) as [? ipB]. ttinv ipB.
-      apply conv_sym in h15. pose proof (sort_conv_inv h15). subst. clear h15.
+      apply conv_sym in h18. pose proof (sort_conv_inv h18). subst. clear h18.
       eapply sorts_in_sort ; eassumption.
     } subst.
     specialize (hpp _ _ _ hm h0 h6).
@@ -1005,11 +1010,11 @@ Proof.
     exists (optCongRefl pA pu).
     intros Γm U1 U2 hm h1 h2.
     ttinv h1. ttinv h2.
-    specialize (hpA _ _ _ hm h h0).
-    specialize (hpu _ _ _ hm h4 h7).
+    specialize (hpA _ _ _ hm h0 h5).
+    specialize (hpu _ _ _ hm h h3).
     assert (s0 = s).
     { destruct (istype_type hg hpA) as [? ipA]. ttinv ipA.
-      cbn in h5, h12. eapply sorts_in_sort ; eassumption.
+      eapply sorts_in_sort ; eassumption.
     } subst.
     eapply type_conv.
     + eapply opt_CongRefl ; eassumption.
@@ -1091,7 +1096,7 @@ Proof.
       rewrite h0 in neq. discriminate neq.
 
   Unshelve.
-  all: cbn ; try rewrite !length_cat ; myomega.
+  all: cbn ; try rewrite !length_cat ; mylia.
 Defined.
 
 Corollary trel_to_heq :
@@ -1258,14 +1263,14 @@ Notation " Γ ≈ Δ " := (crel Γ Δ) (at level 19).
 
 Notation " Γ ⊂ Γ' " := (increl Γ Γ') (at level 19).
 
-Notation " Σ ;;;; Γ' |--- [ t' ] : A' # ⟦ Γ |--- [ t ] : A ⟧ " :=
+Notation " Σ ;;;; Γ' ⊢ [ t' ] : A' ∈ ⟦ Γ ⊢ [ t ] : A ⟧ " :=
   (trans Σ Γ A t Γ' A' t')
     (at level 7) : i_scope.
 
 Definition ctxtrans `{Sort_notion : Sorts.notion} Σ Γ Γ' :=
   Γ ⊂ Γ' * (wf Σ Γ').
 
-Notation " Σ |--i Γ' # ⟦ Γ ⟧ " := (ctxtrans Σ Γ Γ') (at level 7) : i_scope.
+Notation " Σ |--i Γ' ∈ ⟦ Γ ⟧ " := (ctxtrans Σ Γ Γ') (at level 7) : i_scope.
 
 Section Head.
 
@@ -1396,11 +1401,12 @@ Proof.
     change (fold_right transport_data_app A' tseq)
       with (transport_seq_app tseq A') in ht.
     ttinv ht.
-    destruct (IHtseq Γ' A' T1 hg hh h4) as [s' [hAs hT1s]].
+    destruct (IHtseq Γ' A' T1 hg hh h) as [s' [hAs hT1s]].
     exists s'. split.
     + assumption.
-    + pose proof (uniqueness hg h3 hT1s) as hs.
-      apply conv_sym in hs. pose proof (sort_conv_inv hs) as es. rewrite es in *. clear hs.
+    + pose proof (uniqueness hg h1 hT1s) as hs.
+      apply conv_sym in hs. pose proof (sort_conv_inv hs) as es.
+      rewrite es in *. clear hs.
       destruct (istype_type hg ht).
       eapply type_conv ; try eassumption.
       * econstructor. eapply typing_wf. eassumption.
@@ -1475,9 +1481,9 @@ Lemma choose_type :
   forall {Σ Γ A t Γ' A' t'},
     type_glob Σ ->
     type_head (head A) ->
-    Σ ;;;; Γ' |--- [ t' ] : A' # ⟦ Γ |--- [t] : A ⟧ ->
+    Σ ;;;; Γ' ⊢ [ t' ] : A' ∈ ⟦ Γ ⊢ [t] : A ⟧ ->
     ∑ A'',
-      (∑ t'', Σ ;;;; Γ' |--- [ t'' ] : A'' # ⟦ Γ |--- [t] : A ⟧) *
+      (∑ t'', Σ ;;;; Γ' ⊢ [ t'' ] : A'' ∈ ⟦ Γ ⊢ [t] : A ⟧) *
       (head A'' = head A).
 Proof.
   intros Σ Γ A t Γ' A' t' hg htt [[[hΓ hA] ht] h].
@@ -1491,9 +1497,9 @@ Defined.
 Lemma change_type :
   forall {Σ Γ A t Γ' A' t' s A''},
     type_glob Σ ->
-    Σ ;;;; Γ' |--- [ t' ] : A' # ⟦ Γ |--- [t] : A ⟧ ->
-    Σ ;;;; Γ' |--- [ A'' ] : sSort s # ⟦ Γ |--- [A] : sSort s ⟧ ->
-    ∑ t'', Σ ;;;; Γ' |--- [ t'' ] : A'' # ⟦ Γ |--- [t] : A ⟧.
+    Σ ;;;; Γ' ⊢ [ t' ] : A' ∈ ⟦ Γ ⊢ [t] : A ⟧ ->
+    Σ ;;;; Γ' ⊢ [ A'' ] : sSort s ∈ ⟦ Γ ⊢ [A] : sSort s ⟧ ->
+    ∑ t'', Σ ;;;; Γ' ⊢ [ t'' ] : A'' ∈ ⟦ Γ ⊢ [t] : A ⟧.
 Proof.
   intros Σ Γ A t Γ' A' t' s A'' hg [[[rΓ' rA'] rt'] ht'] [[[rΓ'' _] rA''] hA''].
   assert (simA : A' ∼ A'').

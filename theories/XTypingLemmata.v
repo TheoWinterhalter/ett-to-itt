@@ -1,11 +1,13 @@
 (*! Meta-theory for ETT *)
 
-From Coq Require Import Bool String List BinPos Compare_dec PeanoNat.
-From Equations Require Import Equations DepElimDec.
-From Template Require Import Ast utils Typing.
+From Coq Require Import Bool String List BinPos Compare_dec PeanoNat Arith.
+Require Import Equations.Prop.DepElim.
+From Equations Require Import Equations.
+From MetaCoq Require Import Ast utils Typing AstUtils.
 From Translation
 Require Import util Sorts SAst SLiftSubst SCommon ITyping ITypingLemmata
                XTyping.
+Import ListNotations.
 
 Open Scope x_scope.
 
@@ -137,7 +139,7 @@ Proof.
   dependent induction h.
   all: try (cbn in * ; repeat (erewrite_assumption) ; reflexivity).
   unfold closed_above.
-  case_eq (n <? #|Γ|) ; intro e ; bprop e ; try myomega.
+  case_eq (n <? #|Γ|) ; intro e ; bprop e ; try mylia.
   reflexivity.
 Defined.
 
@@ -274,15 +276,15 @@ with cong_lift {Σ Γ Δ Ξ t1 t2 A} (h : Σ ;;; Γ ,,, Ξ |-x t1 ≡ t2 : A) {s
 Proof.
   - { dependent destruction h ; intros hΣ.
       - cbn. case_eq (#|Ξ| <=? n) ; intro e ; bprop e.
-        + rewrite liftP3 by myomega.
-          replace (#|Δ| + S n)%nat with (S (#|Δ| + n)) by myomega.
+        + rewrite liftP3 by mylia.
+          replace (#|Δ| + S n)%nat with (S (#|Δ| + n)) by mylia.
           eapply meta_conv.
           * eapply type_Rel.
           * f_equal. f_equal.
             erewrite 3!safe_nth_ge'
-              by (try rewrite lift_context_length ; myomega).
+              by (try rewrite lift_context_length ; mylia).
             eapply safe_nth_cong_irr.
-            rewrite lift_context_length. myomega.
+            rewrite lift_context_length. mylia.
         + eapply meta_conv.
           * eapply type_Rel.
           * erewrite 2!safe_nth_lt.
@@ -356,7 +358,7 @@ Proof.
 
   Unshelve.
   all: try rewrite !length_cat ; try rewrite length_cat in isdecl ;
-       try rewrite lift_context_length ; myomega.
+       try rewrite lift_context_length ; mylia.
 
 Defined.
 
@@ -470,40 +472,40 @@ Proof.
   - { intros hg hu.
       dependent destruction h.
       - cbn. case_eq (#|Δ| ?= n) ; intro e ; bprop e.
-        + assert (h : n >= #|Δ|) by myomega.
+        + assert (h : n >= #|Δ|) by mylia.
           rewrite safe_nth_ge' with (h0 := h).
-          assert (n - #|Δ| = 0) by myomega.
+          assert (n - #|Δ| = 0) by mylia.
           set (ge := ge_sub isdecl h).
           generalize ge.
           rewrite H. intro ge'.
-          cbn. rewrite substP3 by myomega.
+          cbn. rewrite substP3 by mylia.
           subst.
           replace #|Δ| with #|subst_context u Δ|
             by (now rewrite subst_context_length).
           eapply @type_lift with (Ξ := []) (Δ := subst_context u Δ).
           * cbn. assumption.
           * assumption.
-        + assert (h : n >= #|Δ|) by myomega.
+        + assert (h : n >= #|Δ|) by mylia.
           rewrite safe_nth_ge' with (h0 := h).
           set (ge := ge_sub isdecl h).
           destruct n ; try (exfalso ; abstract easy).
-          rewrite substP3 by myomega.
+          rewrite substP3 by mylia.
           generalize ge.
-          replace (S n - #|Δ|) with (S (n - #|Δ|)) by myomega.
+          replace (S n - #|Δ|) with (S (n - #|Δ|)) by mylia.
           cbn. intro ge'.
           eapply meta_conv.
           * eapply type_Rel.
           * erewrite safe_nth_ge'.
             f_equal. eapply safe_nth_cong_irr.
             rewrite subst_context_length. reflexivity.
-        + assert (h : n < #|Δ|) by myomega.
+        + assert (h : n < #|Δ|) by mylia.
           rewrite @safe_nth_lt with (isdecl' := h).
           match goal with
           | |- _ ;;; _ |-x _ : ?t{?d := ?u} =>
             replace (subst u d t) with (t{((S n) + (#|Δ| - (S n)))%nat := u})
-              by (f_equal ; myomega)
+              by (f_equal ; mylia)
           end.
-          rewrite substP2 by myomega.
+          rewrite substP2 by mylia.
           eapply meta_conv.
           * eapply type_Rel.
           * f_equal.
@@ -573,7 +575,7 @@ Proof.
 
   Unshelve.
   all: try rewrite !length_cat ; try rewrite !subst_context_length ;
-       myomega.
+       mylia.
 Defined.
 
 End Subst.
@@ -620,7 +622,7 @@ Proof.
         destruct s.
         eapply typing_lift01 ; eassumption.
       * assert (isdecl' : n < #|Γ|).
-        -- cbn in isdecl. myomega.
+        -- cbn in isdecl. mylia.
         -- specialize (IHw n isdecl').
            change Ty with (lift0 1 Ty).
            (* Take out as a lemma? *)

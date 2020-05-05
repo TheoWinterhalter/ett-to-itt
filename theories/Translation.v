@@ -1,10 +1,12 @@
-From Coq Require Import Bool String List BinPos Compare_dec Omega.
-From Equations Require Import Equations DepElimDec.
-From Template Require Import Ast utils Typing.
+From Coq Require Import Bool String List BinPos Compare_dec Lia Arith.
+Require Import Equations.Prop.DepElim.
+From Equations Require Import Equations.
+From MetaCoq Require Import Ast utils Typing.
 From Translation
 Require Import util SAst SLiftSubst Equality SCommon XTyping Conversion ITyping
                ITypingInversions ITypingLemmata ITypingAdmissible Optim
                Uniqueness SubjectReduction PackLifts FundamentalLemma.
+Import ListNotations.
 
 Section Translation.
 
@@ -40,9 +42,9 @@ Proof.
 Defined.
 
 Definition trans_snoc {Σ Γ A s Γ' A' s'} :
-  Σ |--i Γ' # ⟦ Γ ⟧ ->
-  Σ ;;;; Γ' |--- [A'] : sSort s' # ⟦ Γ |--- [A] : sSort s ⟧ ->
-  Σ |--i Γ' ,, A' # ⟦ Γ ,, A ⟧.
+  Σ |--i Γ' ∈ ⟦ Γ ⟧ ->
+  Σ ;;;; Γ' ⊢ [A'] : sSort s' ∈ ⟦ Γ ⊢ [A] : sSort s ⟧ ->
+  Σ |--i Γ' ,, A' ∈ ⟦ Γ ,, A ⟧.
 Proof.
   intros hΓ hA.
   split.
@@ -53,12 +55,12 @@ Proof.
 Defined.
 
 Definition trans_Prod {Σ Γ n A B s1 s2 Γ' A' B'} :
-  Σ |--i Γ' # ⟦ Γ ⟧ ->
-  Σ ;;;; Γ' |--- [A'] : sSort s1 # ⟦ Γ |--- [A] : sSort s1 ⟧ ->
-  Σ ;;;; Γ' ,, A' |--- [B'] : sSort s2
-  # ⟦ Γ ,, A |--- [B]: sSort s2 ⟧ ->
-  Σ ;;;; Γ' |--- [sProd n A' B']: sSort (Sorts.prod_sort s1 s2)
-  # ⟦ Γ |--- [ sProd n A B]: sSort (Sorts.prod_sort s1 s2) ⟧.
+  Σ |--i Γ' ∈ ⟦ Γ ⟧ ->
+  Σ ;;;; Γ' ⊢ [A'] : sSort s1 ∈ ⟦ Γ ⊢ [A] : sSort s1 ⟧ ->
+  Σ ;;;; Γ' ,, A' ⊢ [B'] : sSort s2
+  ∈ ⟦ Γ ,, A ⊢ [B]: sSort s2 ⟧ ->
+  Σ ;;;; Γ' ⊢ [sProd n A' B']: sSort (Sorts.prod_sort s1 s2)
+  ∈ ⟦ Γ ⊢ [ sProd n A B]: sSort (Sorts.prod_sort s1 s2) ⟧.
 Proof.
   intros hΓ hA hB.
   destruct hΓ. destruct hA as [[? ?] ?]. destruct hB as [[? ?] ?].
@@ -70,12 +72,12 @@ Proof.
 Defined.
 
 Definition trans_Sum {Σ Γ n A B s1 s2 Γ' A' B'} :
-  Σ |--i Γ' # ⟦ Γ ⟧ ->
-  Σ ;;;; Γ' |--- [A'] : sSort s1 # ⟦ Γ |--- [A] : sSort s1 ⟧ ->
-  Σ ;;;; Γ' ,, A' |--- [B'] : sSort s2
-  # ⟦ Γ ,, A |--- [B]: sSort s2 ⟧ ->
-  Σ ;;;; Γ' |--- [sSum n A' B']: sSort (Sorts.sum_sort s1 s2)
-  # ⟦ Γ |--- [ sSum n A B]: sSort (Sorts.sum_sort s1 s2) ⟧.
+  Σ |--i Γ' ∈ ⟦ Γ ⟧ ->
+  Σ ;;;; Γ' ⊢ [A'] : sSort s1 ∈ ⟦ Γ ⊢ [A] : sSort s1 ⟧ ->
+  Σ ;;;; Γ' ,, A' ⊢ [B'] : sSort s2
+  ∈ ⟦ Γ ,, A ⊢ [B]: sSort s2 ⟧ ->
+  Σ ;;;; Γ' ⊢ [sSum n A' B']: sSort (Sorts.sum_sort s1 s2)
+  ∈ ⟦ Γ ⊢ [ sSum n A B]: sSort (Sorts.sum_sort s1 s2) ⟧.
 Proof.
   intros hΓ hA hB.
   destruct hΓ. destruct hA as [[? ?] ?]. destruct hB as [[? ?] ?].
@@ -87,12 +89,12 @@ Proof.
 Defined.
 
 Definition trans_Eq {Σ Γ A u v s Γ' A' u' v'} :
-  Σ |--i Γ' # ⟦ Γ ⟧ ->
-  Σ ;;;; Γ' |--- [A'] : sSort s # ⟦ Γ |--- [A] : sSort s ⟧ ->
-  Σ ;;;; Γ' |--- [u'] : A' # ⟦ Γ |--- [u] : A ⟧ ->
-  Σ ;;;; Γ' |--- [v'] : A' # ⟦ Γ |--- [v] : A ⟧ ->
-  Σ ;;;; Γ' |--- [sEq A' u' v'] : sSort (Sorts.eq_sort s)
-  # ⟦ Γ |--- [sEq A u v] : sSort (Sorts.eq_sort s) ⟧.
+  Σ |--i Γ' ∈ ⟦ Γ ⟧ ->
+  Σ ;;;; Γ' ⊢ [A'] : sSort s ∈ ⟦ Γ ⊢ [A] : sSort s ⟧ ->
+  Σ ;;;; Γ' ⊢ [u'] : A' ∈ ⟦ Γ ⊢ [u] : A ⟧ ->
+  Σ ;;;; Γ' ⊢ [v'] : A' ∈ ⟦ Γ ⊢ [v] : A ⟧ ->
+  Σ ;;;; Γ' ⊢ [sEq A' u' v'] : sSort (Sorts.eq_sort s)
+  ∈ ⟦ Γ ⊢ [sEq A u v] : sSort (Sorts.eq_sort s) ⟧.
 Proof.
   intros hΓ hA hu hv.
   destruct hA as [[[? ?] ?] ?].
@@ -107,10 +109,10 @@ Defined.
 
 Definition trans_subst {Σ Γ s A B u Γ' A' B' u'} :
   type_glob Σ ->
-  Σ |--i Γ' # ⟦ Γ ⟧ ->
-  Σ ;;;; Γ',, A' |--- [B']: sSort s # ⟦ Γ,, A |--- [B]: sSort s ⟧ ->
-  Σ ;;;; Γ' |--- [u']: A' # ⟦ Γ |--- [u]: A ⟧ ->
-  Σ ;;;; Γ' |--- [B'{ 0 := u' }]: sSort s # ⟦ Γ |--- [B{ 0 := u }]: sSort s ⟧.
+  Σ |--i Γ' ∈ ⟦ Γ ⟧ ->
+  Σ ;;;; Γ',, A' ⊢ [B']: sSort s ∈ ⟦ Γ,, A ⊢ [B]: sSort s ⟧ ->
+  Σ ;;;; Γ' ⊢ [u']: A' ∈ ⟦ Γ ⊢ [u]: A ⟧ ->
+  Σ ;;;; Γ' ⊢ [B'{ 0 := u' }]: sSort s ∈ ⟦ Γ ⊢ [B{ 0 := u }]: sSort s ⟧.
 Proof.
   intros hg hΓ hB hu.
   destruct hΓ.
@@ -135,8 +137,8 @@ Lemma eqtrans_trans :
   forall {Σ Γ A u v Γ' A' A'' u' v' p'},
     type_glob Σ ->
     eqtrans Σ Γ A u v Γ' A' A'' u' v' p' ->
-    (Σ ;;;; Γ' |--- [u'] : A' # ⟦ Γ |--- [u] : A ⟧) *
-    (Σ ;;;; Γ' |--- [v'] : A'' # ⟦ Γ |--- [v] : A ⟧).
+    (Σ ;;;; Γ' ⊢ [u'] : A' ∈ ⟦ Γ ⊢ [u] : A ⟧) *
+    (Σ ;;;; Γ' ⊢ [v'] : A'' ∈ ⟦ Γ ⊢ [v] : A ⟧).
 Proof.
   intros Σ Γ A u v Γ' A' A'' u' v' p' hg h.
   destruct h as [[[[[eΓ eS'] eS''] eA] eB] hp'].
@@ -164,10 +166,10 @@ Definition typing_all :=
 Definition complete_translation {Σ} :
   type_glob Σ ->
   (forall {Γ t A} (h : Σ ;;; Γ |-x t : A)
-     {Γ'} (hΓ : Σ |--i Γ' # ⟦ Γ ⟧),
-      ∑ A' t', Σ ;;;; Γ' |--- [t'] : A' # ⟦ Γ |--- [t] : A ⟧) *
+     {Γ'} (hΓ : Σ |--i Γ' ∈ ⟦ Γ ⟧),
+      ∑ A' t', Σ ;;;; Γ' ⊢ [t'] : A' ∈ ⟦ Γ ⊢ [t] : A ⟧) *
   (forall {Γ u v A} (h : Σ ;;; Γ |-x u ≡ v : A)
-     {Γ'} (hΓ : Σ |--i Γ' # ⟦ Γ ⟧),
+     {Γ'} (hΓ : Σ |--i Γ' ∈ ⟦ Γ ⟧),
       ∑ A' A'' u' v' p',
         eqtrans Σ Γ A u v Γ' A' A'' u' v' p').
 Proof.
@@ -176,10 +178,10 @@ Proof.
     typing_all
       Σ
       (fun {Γ t A} (h : Σ ;;; Γ |-x t : A) => forall
-           {Γ'} (hΓ : Σ |--i Γ' # ⟦ Γ ⟧),
-           ∑ A' t', Σ ;;;; Γ' |--- [t'] : A' # ⟦ Γ |--- [t] : A ⟧)
+           {Γ'} (hΓ : Σ |--i Γ' ∈ ⟦ Γ ⟧),
+           ∑ A' t', Σ ;;;; Γ' ⊢ [t'] : A' ∈ ⟦ Γ ⊢ [t] : A ⟧)
       (fun {Γ u v A} (h : Σ ;;; Γ |-x u ≡ v : A) => forall
-           {Γ'} (hΓ : Σ |--i Γ' # ⟦ Γ ⟧),
+           {Γ'} (hΓ : Σ |--i Γ' ∈ ⟦ Γ ⟧),
            ∑ A' A'' u' v' p',
          eqtrans Σ Γ A u v Γ' A' A'' u' v' p')
       _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
@@ -2665,7 +2667,7 @@ Defined.
 
 Theorem context_translation {Σ} :
   type_glob Σ ->
-  forall Γ (h : XTyping.wf Σ Γ), ∑ Γ', Σ |--i Γ' # ⟦ Γ ⟧.
+  forall Γ (h : XTyping.wf Σ Γ), ∑ Γ', Σ |--i Γ' ∈ ⟦ Γ ⟧.
 Proof.
   intros hg Γ h. induction h.
   (* wf_nil *)
@@ -2696,8 +2698,8 @@ Corollary conservativity :
     ∑ t', Σ ;;; [] |-i t' : A.
 Proof.
   intros Σ t A s hg xA hA ht.
-  assert (h' : Σ ;;;; [] |--- [ A ] : sSort s
-             # ⟦ [] |--- [ A ] : sSort s ⟧).
+  assert (h' : Σ ;;;; [] ⊢ [ A ] : sSort s
+             ∈ ⟦ [] ⊢ [ A ] : sSort s ⟧).
   { repeat split.
     - constructor.
     - constructor.

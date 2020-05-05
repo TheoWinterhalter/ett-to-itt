@@ -1,11 +1,13 @@
 (* Context Conversion  *)
 
-From Coq Require Import Bool String List BinPos Compare_dec Omega.
-From Equations Require Import Equations DepElimDec.
-From Template Require Import Ast utils Typing.
+From Coq Require Import Bool String List BinPos Compare_dec Lia Arith.
+Require Import Equations.Prop.DepElim.
+From Equations Require Import Equations.
+From MetaCoq Require Import Ast utils Typing.
 From Translation
 Require Import util Sorts SAst SLiftSubst Equality SCommon Conversion ITyping
                ITypingInversions ITypingLemmata.
+Import ListNotations.
 
 Section ContextConversion.
 
@@ -107,8 +109,8 @@ Section ctxconv.
         end.
         destruct (IHhc _ is' w1 w2).
         eexists.
-        replace (S (S n)) with (1 + (S n))%nat by myomega.
-        rewrite <- liftP3 with (k := 0) by myomega.
+        replace (S (S n)) with (1 + (S n))%nat by mylia.
+        rewrite <- liftP3 with (k := 0) by mylia.
         lift_sort. eapply typing_lift01 ; eassumption.
   Defined.
 
@@ -176,12 +178,12 @@ Section ctxconv.
     - econstructor.
       + lift_sort. eapply typing_lift01 ; try eassumption ; ih.
       + eapply typing_lift01 ; try eassumption ; ih.
-      + refine (type_Rel _ _ _ _ _) ; [| cbn ; myomega ].
+      + refine (type_Rel _ _ _ _ _) ; [| cbn ; mylia ].
         econstructor ; try eassumption. ih.
     - eexists. econstructor.
       + lift_sort. eapply typing_lift01 ; try eassumption ; ih.
       + eapply typing_lift01 ; try eassumption ; ih.
-      + refine (type_Rel _ _ _ _ _) ; [| cbn ; myomega ].
+      + refine (type_Rel _ _ _ _ _) ; [| cbn ; mylia ].
         econstructor ; try eassumption. ih.
     - eapply type_HeqTrans with (B0 := B) ; ih.
     - econstructor ; try ih.

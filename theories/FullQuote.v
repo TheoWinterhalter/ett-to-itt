@@ -1,13 +1,15 @@
-(* Partial translation from TemplateCoq to ITT *)
+(* Partial translation From MetaCoqCoq to ITT *)
 
-From Coq Require Import Bool String List BinPos Compare_dec Omega.
-From Equations Require Import Equations DepElimDec.
-From Template
-Require Import Ast utils monad_utils Typing Checker.
+From Coq Require Import Bool String List BinPos Compare_dec Lia Arith.
+Require Import Equations.Prop.DepElim.
+From Equations Require Import Equations.
+From MetaCoq
+Require Import Ast utils monad_utils Typing Checker AstUtils uGraph.
 From Translation
 Require Import util Sorts SAst SLiftSubst SCommon ITyping Quotes
                FinalTranslation.
 Import MonadNotation.
+Import ListNotations.
 
 
 Inductive assocn (A : Type) :=
@@ -64,9 +66,13 @@ Close Scope s_scope.
 
 Local Existing Instance Sorts.type_in_type.
 
-Fixpoint fullquote (fuel : nat) (Σ : global_context) (Γ : context) (t : term)
-         (indt : assoc sterm) (constt : assoc sterm) (cot : assocn sterm)
-         {struct fuel}
+Open Scope string_scope.
+
+Existing Instance default_fuel.
+
+Fixpoint fullquote (fuel : nat) (Σ : global_env) (G : universes_graph)
+  (Γ : context) (t : term) (indt : assoc sterm) (constt : assoc sterm)
+  (cot : assocn sterm) {struct fuel}
   : fq_result sterm :=
   match fuel with
   | 0 => raise NotEnoughFuel
@@ -75,20 +81,20 @@ Fixpoint fullquote (fuel : nat) (Σ : global_context) (Γ : context) (t : term)
     | tRel n => ret (sRel n)
     | tSort _ => ret (sSort tt)
     | tProd nx A B =>
-      A' <- fullquote fuel Σ Γ A indt constt cot ;;
-      B' <- fullquote fuel Σ (Γ ,, vass nx A) B indt constt cot ;;
+      A' <- fullquote fuel Σ G Γ A indt constt cot ;;
+      B' <- fullquote fuel Σ G (Γ ,, vass nx A) B indt constt cot ;;
       ret (sProd nx A' B')
     | tLambda nx A t =>
-      match infer_hnf fuel Σ (Γ ,, vass nx A) t with
+      match infer_hnf Σ G (Γ ,, vass nx A) t with
       | Checked B =>
-        A' <- fullquote fuel Σ Γ A indt constt cot ;;
-        B' <- fullquote fuel Σ (Γ ,, vass nx A) B indt constt cot ;;
-        t' <- fullquote fuel Σ (Γ ,, vass nx A) t indt constt cot ;;
+        A' <- fullquote fuel Σ G Γ A indt constt cot ;;
+        B' <- fullquote fuel Σ G (Γ ,, vass nx A) B indt constt cot ;;
+        t' <- fullquote fuel Σ G (Γ ,, vass nx A) t indt constt cot ;;
         ret (sLambda nx A' B' t')
       | TypeError e => raise (TypingError "Lambda" e (Γ ,, vass nx A) t)
       end
     | tApp (tConst "Translation.Quotes.candidate" []) [ _ ; _ ; t ] =>
-      fullquote fuel Σ Γ t indt constt cot
+      fullquote fuel Σ G Γ t indt constt cot
     | tInd {| inductive_mind := id ; inductive_ind := _ |} [] =>
       match assoc_at id indt with
       | Some t => ret t
@@ -105,26 +111,26 @@ Fixpoint fullquote (fuel : nat) (Σ : global_context) (Γ : context) (t : term)
       | None => raise (UnknownConstruct id n)
       end
     | tApp (tInd {| inductive_mind := "Coq.Init.Logic.eq"; inductive_ind := 0 |} []) [ A ; u ; v ] =>
-      A' <- fullquote fuel Σ Γ A indt constt cot ;;
-      u' <- fullquote fuel Σ Γ u indt constt cot ;;
-      v' <- fullquote fuel Σ Γ v indt constt cot ;;
+      A' <- fullquote fuel Σ G Γ A indt constt cot ;;
+      u' <- fullquote fuel Σ G Γ u indt constt cot ;;
+      v' <- fullquote fuel Σ G Γ v indt constt cot ;;
       ret (sEq A' u' v')
     | tApp u [] =>
-      fullquote fuel Σ Γ u indt constt cot
+      fullquote fuel Σ G Γ u indt constt cot
     | tApp u [ v ] =>
-      match infer_hnf fuel Σ Γ u with
+      match infer_hnf Σ G Γ u with
       | Checked (tProd nx A B) =>
-        u' <- fullquote fuel Σ Γ u indt constt cot ;;
-        A' <- fullquote fuel Σ Γ A indt constt cot ;;
-        B' <- fullquote fuel Σ (Γ ,, vass nx A) B indt constt cot ;;
-        v' <- fullquote fuel Σ Γ v indt constt cot ;;
+        u' <- fullquote fuel Σ G Γ u indt constt cot ;;
+        A' <- fullquote fuel Σ G Γ A indt constt cot ;;
+        B' <- fullquote fuel Σ G (Γ ,, vass nx A) B indt constt cot ;;
+        v' <- fullquote fuel Σ G Γ v indt constt cot ;;
         ret (sApp u' A' B' v')
       | Checked T => raise (WrongType "Prod" T)
       | TypeError e => raise (TypingError "App1" e Γ u)
       end
     | tApp u (v :: l) =>
-      fullquote fuel Σ Γ (tApp (tApp u [ v ]) l) indt constt cot
-    | tCast t _ _ => fullquote fuel Σ Γ t indt constt cot
+      fullquote fuel Σ G Γ (tApp (tApp u [ v ]) l) indt constt cot
+    | tCast t _ _ => fullquote fuel Σ G Γ t indt constt cot
     | _ => raise (NotHandled t)
     end
   end.

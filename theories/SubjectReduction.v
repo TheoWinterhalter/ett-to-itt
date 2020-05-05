@@ -1,11 +1,13 @@
 (* Subject Reduction *)
 
-From Coq Require Import Bool String List BinPos Compare_dec Omega.
-From Equations Require Import Equations DepElimDec.
-From Template Require Import Ast utils Typing.
+From Coq Require Import Bool String List BinPos Compare_dec Lia Arith.
+Require Import Equations.Prop.DepElim.
+From Equations Require Import Equations.
+From MetaCoq Require Import Ast utils Typing.
 From Translation
 Require Import util Sorts SAst SLiftSubst Equality SCommon Conversion ITyping
                ITypingInversions ITypingLemmata ContextConversion Uniqueness.
+Import ListNotations.
 
 Section subjred.
 
@@ -74,8 +76,8 @@ Section subjred.
     all: try sr.
     - intros Γ T ht.
       destruct (istype_type hg ht).
-      ttinv ht. ttinv h3.
-      destruct (prod_inv h6).
+      ttinv ht. ttinv h1.
+      destruct (prod_inv h8).
       eapply type_conv ; try eassumption.
       eapply typing_subst ; try eassumption.
       eapply type_conv ; try eassumption.
@@ -87,7 +89,7 @@ Section subjred.
     - intros Γ T ht.
       destruct (istype_type hg ht).
       ttinv ht. ttinv h3.
-      destruct (eq_conv_inv h8) as [[? ?] ?].
+      destruct (eq_conv_inv h9) as [? [? ?]].
       eapply type_conv ; try eassumption.
       eapply conv_trans ; try eassumption.
       apply cong_subst.
@@ -97,8 +99,8 @@ Section subjred.
         apply conv_sym. assumption.
     - intros Γ T' ht.
       destruct (istype_type hg ht).
-      ttinv ht. ttinv h.
-      destruct (eq_conv_inv h6) as [[? ?] ?].
+      ttinv ht. ttinv h0.
+      destruct (eq_conv_inv h7) as [? [? ?]].
       eapply type_conv ; try eassumption.
       eapply conv_trans.
       + eapply conv_sym. eassumption.
@@ -290,7 +292,7 @@ Section subjred.
                 ** lift_sort. eapply typing_lift01 ; try eassumption.
                 ** eapply typing_lift01 ; try eassumption.
                    econstructor ; try eassumption.
-                ** refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                ** refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                    econstructor ; try eassumption.
                    eapply typing_wf. eassumption.
           -- constructor.
@@ -332,7 +334,7 @@ Section subjred.
              ++ econstructor.
                 ** lift_sort. eapply typing_lift01 ; try eassumption.
                 ** eapply typing_lift01 ; try eassumption.
-                ** refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                ** refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                    econstructor ; try eassumption.
                    eapply typing_wf. eassumption.
           -- constructor.
@@ -497,7 +499,7 @@ Section subjred.
                        econstructor ; try eassumption.
                    --- lift_sort. eapply typing_lift01 ; try eassumption.
                        econstructor ; try eassumption.
-                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                        eapply typing_wf. eassumption.
              ++ lift_sort. eapply typing_subst ; try eassumption.
                 ** lift_sort.
@@ -509,7 +511,7 @@ Section subjred.
                        econstructor ; try eassumption.
                    --- lift_sort. eapply typing_lift01 ; try eassumption.
                        econstructor ; try eassumption.
-                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                        eapply typing_wf. eassumption.
           -- apply cong_Heq ; try apply conv_refl.
              apply subst_conv. apply lift_conv. assumption.
@@ -542,7 +544,7 @@ Section subjred.
                        econstructor ; try eassumption.
                    --- lift_sort. eapply typing_lift01 ; try eassumption.
                        econstructor ; try eassumption.
-                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                        eapply typing_wf. eassumption.
              ++ lift_sort. eapply typing_subst ; try eassumption.
                 ** lift_sort.
@@ -554,7 +556,7 @@ Section subjred.
                        econstructor ; try eassumption.
                    --- lift_sort. eapply typing_lift01 ; try eassumption.
                        econstructor ; try eassumption.
-                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                        eapply typing_wf. eassumption.
           -- apply cong_Heq ; try apply conv_refl.
              apply subst_conv. apply lift_conv. assumption.
@@ -599,7 +601,7 @@ Section subjred.
                            econstructor ; try eassumption.
                        +++ lift_sort. eapply typing_lift01 ; try eassumption.
                            econstructor ; try eassumption.
-                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                            eapply typing_wf. eassumption.
                 ** lift_sort. eapply typing_subst ; try eassumption.
                    --- lift_sort.
@@ -611,7 +613,7 @@ Section subjred.
                            econstructor ; try eassumption.
                        +++ lift_sort. eapply typing_lift01 ; try eassumption.
                            econstructor ; try eassumption.
-                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                            eapply typing_wf. eassumption.
              ++ apply cong_Heq. all: try apply conv_refl.
                 apply subst_conv. apply lift_conv. assumption.
@@ -627,7 +629,7 @@ Section subjred.
                            econstructor ; try eassumption.
                        +++ lift_sort. eapply typing_lift01 ; try eassumption.
                            econstructor ; try eassumption.
-                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                            eapply typing_wf. eassumption.
                 ** lift_sort. eapply typing_subst ; try eassumption.
                    --- lift_sort.
@@ -639,7 +641,7 @@ Section subjred.
                            econstructor ; try eassumption.
                        +++ lift_sort. eapply typing_lift01 ; try eassumption.
                            econstructor ; try eassumption.
-                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                            eapply typing_wf. eassumption.
                 ** eapply typing_subst ; try eassumption.
                    --- eapply @type_lift with (Δ := [ sPack A1 A2 ]) (Ξ := [ A1 ]) ;
@@ -651,7 +653,7 @@ Section subjred.
                            econstructor ; try eassumption.
                        +++ lift_sort. eapply typing_lift01 ; try eassumption.
                            econstructor ; try eassumption.
-                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                            eapply typing_wf. eassumption.
                 ** eapply typing_subst ; try eassumption.
                    --- eapply @type_lift with (Δ := [ sPack A1 A2 ]) (Ξ := [ A2 ]) ;
@@ -662,7 +664,7 @@ Section subjred.
                            econstructor ; try eassumption.
                        +++ lift_sort. eapply typing_lift01 ; try eassumption.
                            econstructor ; try eassumption.
-                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                            eapply typing_wf. eassumption.
              ++ apply cong_Heq. all: try apply conv_refl.
                 apply subst_conv. apply lift_conv. assumption.
@@ -697,7 +699,7 @@ Section subjred.
                            econstructor ; try eassumption.
                        +++ lift_sort. eapply typing_lift01 ; try eassumption.
                            econstructor ; try eassumption.
-                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                            eapply typing_wf. eassumption.
                 ** lift_sort. eapply typing_subst ; try eassumption.
                    --- lift_sort.
@@ -709,7 +711,7 @@ Section subjred.
                            econstructor ; try eassumption.
                        +++ lift_sort. eapply typing_lift01 ; try eassumption.
                            econstructor ; try eassumption.
-                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                            eapply typing_wf. eassumption.
              ++ apply cong_Heq. all: try apply conv_refl.
                 apply subst_conv. apply lift_conv. assumption.
@@ -725,7 +727,7 @@ Section subjred.
                            econstructor ; try eassumption.
                        +++ lift_sort. eapply typing_lift01 ; try eassumption.
                            econstructor ; try eassumption.
-                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                            eapply typing_wf. eassumption.
                 ** lift_sort. eapply typing_subst ; try eassumption.
                    --- lift_sort.
@@ -737,7 +739,7 @@ Section subjred.
                            econstructor ; try eassumption.
                        +++ lift_sort. eapply typing_lift01 ; try eassumption.
                            econstructor ; try eassumption.
-                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                            eapply typing_wf. eassumption.
                 ** eapply typing_subst ; try eassumption.
                    --- eapply @type_lift with (Δ := [ sPack A1 A2 ]) (Ξ := [ A1 ]) ;
@@ -748,7 +750,7 @@ Section subjred.
                            econstructor ; try eassumption.
                        +++ lift_sort. eapply typing_lift01 ; try eassumption.
                            econstructor ; try eassumption.
-                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                            eapply typing_wf. eassumption.
                 ** eapply typing_subst ; try eassumption.
                    --- eapply @type_lift with (Δ := [ sPack A1 A2 ]) (Ξ := [ A2 ]) ;
@@ -760,7 +762,7 @@ Section subjred.
                            econstructor ; try eassumption.
                        +++ lift_sort. eapply typing_lift01 ; try eassumption.
                            econstructor ; try eassumption.
-                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                            eapply typing_wf. eassumption.
              ++ apply cong_Heq. all: try apply conv_refl.
                 apply subst_conv. apply lift_conv. assumption.
@@ -793,7 +795,7 @@ Section subjred.
                        econstructor ; try eassumption.
                    --- lift_sort. eapply typing_lift01 ; try eassumption.
                        econstructor ; try eassumption.
-                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                        eapply typing_wf. eassumption.
              ++ lift_sort. eapply typing_subst ; try eassumption.
                 ** lift_sort.
@@ -805,7 +807,7 @@ Section subjred.
                        econstructor ; try eassumption.
                    --- lift_sort. eapply typing_lift01 ; try eassumption.
                        econstructor ; try eassumption.
-                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                        eapply typing_wf. eassumption.
              ++ eapply typing_subst ; try eassumption.
                 ** eapply @type_lift with (Δ := [ sPack A1 A2 ]) (Ξ := [ A1 ]) ;
@@ -816,7 +818,7 @@ Section subjred.
                        econstructor ; try eassumption.
                    --- lift_sort. eapply typing_lift01 ; try eassumption.
                        econstructor ; try eassumption.
-                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                        eapply typing_wf. eassumption.
              ++ eapply typing_subst ; try eassumption.
                 ** eapply @type_lift with (Δ := [ sPack A1 A2 ]) (Ξ := [ A2 ]) ;
@@ -827,7 +829,7 @@ Section subjred.
                        econstructor ; try eassumption.
                    --- lift_sort. eapply typing_lift01 ; try eassumption.
                        econstructor ; try eassumption.
-                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                        eapply typing_wf. eassumption.
           -- apply cong_Heq. all: try apply conv_refl.
              apply subst_conv. apply lift_conv. assumption.
@@ -858,7 +860,7 @@ Section subjred.
                        econstructor ; try eassumption.
                    --- lift_sort. eapply typing_lift01 ; try eassumption.
                        econstructor ; try eassumption.
-                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                        eapply typing_wf. eassumption.
              ++ lift_sort. eapply typing_subst ; try eassumption.
                 ** lift_sort.
@@ -870,7 +872,7 @@ Section subjred.
                        econstructor ; try eassumption.
                    --- lift_sort. eapply typing_lift01 ; try eassumption.
                        econstructor ; try eassumption.
-                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                        eapply typing_wf. eassumption.
              ++ eapply typing_subst ; try eassumption.
                 ** eapply @type_lift with (Δ := [ sPack A1 A2 ]) (Ξ := [ A1 ]) ;
@@ -881,7 +883,7 @@ Section subjred.
                        econstructor ; try eassumption.
                    --- lift_sort. eapply typing_lift01 ; try eassumption.
                        econstructor ; try eassumption.
-                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                        eapply typing_wf. eassumption.
              ++ eapply typing_subst ; try eassumption.
                 ** eapply @type_lift with (Δ := [ sPack A1 A2 ]) (Ξ := [ A2 ]) ;
@@ -892,7 +894,7 @@ Section subjred.
                        econstructor ; try eassumption.
                    --- lift_sort. eapply typing_lift01 ; try eassumption.
                        econstructor ; try eassumption.
-                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                        eapply typing_wf. eassumption.
           -- apply cong_Heq. all: try apply conv_refl.
              apply subst_conv. apply lift_conv. assumption.
@@ -943,7 +945,7 @@ Section subjred.
                            econstructor ; try eassumption.
                        +++ lift_sort. eapply typing_lift01 ; try eassumption.
                            econstructor ; try eassumption.
-                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                            eapply typing_wf. eassumption.
                 ** lift_sort. eapply typing_subst ; try eassumption.
                    --- lift_sort.
@@ -955,7 +957,7 @@ Section subjred.
                            econstructor ; try eassumption.
                        +++ lift_sort. eapply typing_lift01 ; try eassumption.
                            econstructor ; try eassumption.
-                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                            eapply typing_wf. eassumption.
              ++ apply cong_Heq. all: try apply conv_refl.
                 apply subst_conv. apply lift_conv. assumption.
@@ -1002,7 +1004,7 @@ Section subjred.
                            econstructor ; try eassumption.
                        +++ lift_sort. eapply typing_lift01 ; try eassumption.
                            econstructor ; try eassumption.
-                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                            eapply typing_wf. eassumption.
                 ** lift_sort. eapply typing_subst ; try eassumption.
                    --- lift_sort.
@@ -1014,7 +1016,7 @@ Section subjred.
                            econstructor ; try eassumption.
                        +++ lift_sort. eapply typing_lift01 ; try eassumption.
                            econstructor ; try eassumption.
-                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                            eapply typing_wf. eassumption.
              ++ apply cong_Heq. all: try apply conv_refl.
                 apply subst_conv. apply lift_conv. assumption.
@@ -1085,7 +1087,7 @@ Section subjred.
                        econstructor ; try eassumption.
                    --- lift_sort. eapply typing_lift01 ; try eassumption.
                        econstructor ; try eassumption.
-                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                        eapply typing_wf. eassumption.
              ++ lift_sort. eapply typing_subst ; try eassumption.
                 ** lift_sort.
@@ -1097,7 +1099,7 @@ Section subjred.
                        econstructor ; try eassumption.
                    --- lift_sort. eapply typing_lift01 ; try eassumption.
                        econstructor ; try eassumption.
-                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                        eapply typing_wf. eassumption.
           -- apply cong_Heq ; try apply conv_refl.
              apply subst_conv. apply lift_conv. assumption.
@@ -1130,7 +1132,7 @@ Section subjred.
                        econstructor ; try eassumption.
                    --- lift_sort. eapply typing_lift01 ; try eassumption.
                        econstructor ; try eassumption.
-                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                        eapply typing_wf. eassumption.
              ++ lift_sort. eapply typing_subst ; try eassumption.
                 ** lift_sort.
@@ -1142,7 +1144,7 @@ Section subjred.
                        econstructor ; try eassumption.
                    --- lift_sort. eapply typing_lift01 ; try eassumption.
                        econstructor ; try eassumption.
-                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                   --- refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                        eapply typing_wf. eassumption.
           -- apply cong_Heq ; try apply conv_refl.
              apply subst_conv. apply lift_conv. assumption.
@@ -1189,7 +1191,7 @@ Section subjred.
                            econstructor ; try eassumption.
                        +++ lift_sort. eapply typing_lift01 ; try eassumption.
                            econstructor ; try eassumption.
-                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                            eapply typing_wf. eassumption.
                 ** lift_sort. eapply typing_subst ; try eassumption.
                    --- lift_sort.
@@ -1201,7 +1203,7 @@ Section subjred.
                            econstructor ; try eassumption.
                        +++ lift_sort. eapply typing_lift01 ; try eassumption.
                            econstructor ; try eassumption.
-                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                            eapply typing_wf. eassumption.
              ++ apply cong_Heq ; try apply conv_refl.
                 apply subst_conv. apply lift_conv. assumption.
@@ -1249,7 +1251,7 @@ Section subjred.
                            econstructor ; try eassumption.
                        +++ lift_sort. eapply typing_lift01 ; try eassumption.
                            econstructor ; try eassumption.
-                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                            eapply typing_wf. eassumption.
                 ** lift_sort. eapply typing_subst ; try eassumption.
                    --- lift_sort.
@@ -1261,7 +1263,7 @@ Section subjred.
                            econstructor ; try eassumption.
                        +++ lift_sort. eapply typing_lift01 ; try eassumption.
                            econstructor ; try eassumption.
-                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                            eapply typing_wf. eassumption.
              ++ apply cong_Heq ; try apply conv_refl.
                 apply subst_conv. apply lift_conv. assumption.
@@ -1329,7 +1331,7 @@ Section subjred.
                            econstructor ; try eassumption.
                        +++ lift_sort. eapply typing_lift01 ; try eassumption.
                            econstructor ; try eassumption.
-                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                            eapply typing_wf. eassumption.
                 ** lift_sort. eapply typing_subst ; try eassumption.
                    --- lift_sort.
@@ -1341,7 +1343,7 @@ Section subjred.
                            econstructor ; try eassumption.
                        +++ lift_sort. eapply typing_lift01 ; try eassumption.
                            econstructor ; try eassumption.
-                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                            eapply typing_wf. eassumption.
              ++ apply cong_Heq ; try apply conv_refl.
                 apply subst_conv. apply lift_conv. assumption.
@@ -1386,7 +1388,7 @@ Section subjred.
                            econstructor ; try eassumption.
                        +++ lift_sort. eapply typing_lift01 ; try eassumption.
                            econstructor ; try eassumption.
-                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                            eapply typing_wf. eassumption.
                 ** lift_sort. eapply typing_subst ; try eassumption.
                    --- lift_sort.
@@ -1398,7 +1400,7 @@ Section subjred.
                            econstructor ; try eassumption.
                        +++ lift_sort. eapply typing_lift01 ; try eassumption.
                            econstructor ; try eassumption.
-                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                            eapply typing_wf. eassumption.
              ++ apply cong_Heq ; try apply conv_refl.
                 apply subst_conv. apply lift_conv. assumption.
@@ -1452,7 +1454,7 @@ Section subjred.
                            econstructor ; try eassumption.
                        +++ lift_sort. eapply typing_lift01 ; try eassumption.
                            econstructor ; try eassumption.
-                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                            eapply typing_wf. eassumption.
                 ** lift_sort. eapply typing_subst ; try eassumption.
                    --- lift_sort.
@@ -1464,7 +1466,7 @@ Section subjred.
                            econstructor ; try eassumption.
                        +++ lift_sort. eapply typing_lift01 ; try eassumption.
                            econstructor ; try eassumption.
-                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                            eapply typing_wf. eassumption.
              ++ apply cong_Heq ; try apply conv_refl.
                 apply subst_conv. apply lift_conv. assumption.
@@ -1518,7 +1520,7 @@ Section subjred.
                            econstructor ; try eassumption.
                        +++ lift_sort. eapply typing_lift01 ; try eassumption.
                            econstructor ; try eassumption.
-                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                            eapply typing_wf. eassumption.
                 ** lift_sort. eapply typing_subst ; try eassumption.
                    --- lift_sort.
@@ -1530,7 +1532,7 @@ Section subjred.
                            econstructor ; try eassumption.
                        +++ lift_sort. eapply typing_lift01 ; try eassumption.
                            econstructor ; try eassumption.
-                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                       +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                            eapply typing_wf. eassumption.
              ++ apply cong_Heq ; try apply conv_refl.
                 apply subst_conv. apply lift_conv. assumption.
@@ -1845,7 +1847,7 @@ Proof.
                  econstructor.
                  --- lift_sort. eapply typing_lift01 ; eassumption.
                  --- eapply typing_lift01 ; eassumption.
-                 --- refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                 --- refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                      econstructor ; try eassumption.
                      eapply typing_wf. eassumption.
               ** cbn. rewrite !lift_subst, lift00.
@@ -1915,7 +1917,7 @@ Proof.
                  go.
               ** lift_sort. eapply typing_lift01 ; try eassumption.
                  go.
-              ** refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+              ** refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                  eapply typing_wf. eassumption.
         -- lift_sort. eapply typing_subst ; try eassumption.
            ++ lift_sort.
@@ -1930,7 +1932,7 @@ Proof.
                  go.
               ** lift_sort. eapply typing_lift01 ; try eassumption.
                  go.
-              ** refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+              ** refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                  eapply typing_wf. eassumption.
       * go. cbn. f_equal.
         -- apply nl_subst.
@@ -1966,7 +1968,7 @@ Proof.
                      go.
                  +++ lift_sort. eapply typing_lift01 ; try eassumption.
                      go.
-                 +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                 +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                      eapply typing_wf. eassumption.
            ++ lift_sort. eapply typing_subst ; try eassumption.
               ** lift_sort.
@@ -1983,7 +1985,7 @@ Proof.
                      go.
                  +++ lift_sort. eapply typing_lift01 ; try eassumption.
                      go.
-                 +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                 +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                      eapply typing_wf. eassumption.
         -- go. cbn. f_equal.
            ++ apply nl_subst.
@@ -2009,7 +2011,7 @@ Proof.
                      go.
                  +++ lift_sort. eapply typing_lift01 ; try eassumption.
                      go.
-                 +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                 +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                      eapply typing_wf. eassumption.
            ++ lift_sort. eapply typing_subst ; try eassumption.
               ** lift_sort.
@@ -2026,7 +2028,7 @@ Proof.
                      go.
                  +++ lift_sort. eapply typing_lift01 ; try eassumption.
                      go.
-                 +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                 +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                      eapply typing_wf. eassumption.
            ++ eapply typing_subst ; try eassumption.
               ** eapply @type_lift with (Δ := [ sPack A1 A2 ]) (Ξ := [ A1 ]) ;
@@ -2040,7 +2042,7 @@ Proof.
                      go.
                  +++ lift_sort. eapply typing_lift01 ; try eassumption.
                      go.
-                 +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                 +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                      eapply typing_wf. eassumption.
            ++ eapply typing_subst ; try eassumption.
               ** eapply @type_lift with (Δ := [ sPack A1 A2 ]) (Ξ := [ A2 ]) ;
@@ -2054,7 +2056,7 @@ Proof.
                      go.
                  +++ lift_sort. eapply typing_lift01 ; try eassumption.
                      go.
-                 +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                 +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                      eapply typing_wf. eassumption.
         -- go. cbn. f_equal.
            all: apply nl_subst.
@@ -2094,7 +2096,7 @@ Proof.
                      go.
                  +++ lift_sort. eapply typing_lift01 ; try eassumption.
                      go.
-                 +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                 +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                      eapply typing_wf. eassumption.
            ++ lift_sort. eapply typing_subst ; try eassumption.
               ** lift_sort.
@@ -2111,7 +2113,7 @@ Proof.
                      go.
                  +++ lift_sort. eapply typing_lift01 ; try eassumption.
                      go.
-                 +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                 +++ refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                      eapply typing_wf. eassumption.
         -- go. cbn. f_equal.
            all: apply nl_subst ; try reflexivity.
@@ -2166,7 +2168,7 @@ Proof.
                  go.
               ** lift_sort. eapply typing_lift01 ; try eassumption.
                  go.
-              ** refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+              ** refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                  eapply typing_wf. eassumption.
         -- lift_sort. eapply typing_subst ; try eassumption.
            ++ lift_sort.
@@ -2181,7 +2183,7 @@ Proof.
                  go.
               ** lift_sort. eapply typing_lift01 ; try eassumption.
                  go.
-              ** refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+              ** refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                  eapply typing_wf. eassumption.
       * go. cbn. f_equal.
         -- apply nl_subst.
@@ -2213,7 +2215,7 @@ Proof.
                      go.
                  --- lift_sort. eapply typing_lift01 ; try eassumption.
                      go.
-                 --- refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                 --- refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                      eapply typing_wf. eassumption.
            ++ lift_sort. eapply typing_subst ; try eassumption.
               ** lift_sort.
@@ -2226,7 +2228,7 @@ Proof.
                      go.
                  --- lift_sort. eapply typing_lift01 ; try eassumption.
                      go.
-                 --- refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                 --- refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                      eapply typing_wf. eassumption.
         -- apply cong_Heq ; try apply conv_refl.
            ++ apply subst_conv. apply lift_conv. go.
@@ -2284,7 +2286,7 @@ Proof.
                      go.
                  --- lift_sort. eapply typing_lift01 ; try eassumption.
                      go.
-                 --- refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                 --- refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                      eapply typing_wf. eassumption.
            ++ lift_sort. eapply typing_subst ; try eassumption.
               ** lift_sort.
@@ -2297,7 +2299,7 @@ Proof.
                      go.
                  --- lift_sort. eapply typing_lift01 ; try eassumption.
                      go.
-                 --- refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                 --- refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                      eapply typing_wf. eassumption.
         -- apply cong_Heq ; try apply conv_refl.
            ++ apply subst_conv. apply lift_conv. go.
@@ -2345,7 +2347,7 @@ Proof.
                      go.
                  --- lift_sort. eapply typing_lift01 ; try eassumption.
                      go.
-                 --- refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                 --- refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                      eapply typing_wf. eassumption.
            ++ lift_sort. eapply typing_subst ; try eassumption.
               ** lift_sort.
@@ -2358,7 +2360,7 @@ Proof.
                      go.
                  --- lift_sort. eapply typing_lift01 ; try eassumption.
                      go.
-                 --- refine (type_Rel _ _ _ _ _) ; try (cbn ; myomega).
+                 --- refine (type_Rel _ _ _ _ _) ; try (cbn ; mylia).
                      eapply typing_wf. eassumption.
         -- apply cong_Heq ; try apply conv_refl.
            ++ apply subst_conv. apply lift_conv. go.
@@ -2427,7 +2429,7 @@ Proof.
   - go. subst. assumption.
   - go.
   Unshelve. all: auto.
-  cbn. myomega.
+  cbn. mylia.
 Defined.
 
 End nltype.

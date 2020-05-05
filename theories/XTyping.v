@@ -1,6 +1,7 @@
-From Coq Require Import Bool String List BinPos Compare_dec Omega.
-From Equations Require Import Equations DepElimDec.
-From Template Require Import Ast utils Typing.
+From Coq Require Import Bool String List BinPos Compare_dec Lia.
+Require Import Equations.Prop.DepElim.
+From Equations Require Import Equations.
+From MetaCoq Require Import Ast utils Typing.
 From Translation Require Import util Sorts SAst SLiftSubst SCommon Equality.
 
 Reserved Notation " Σ ;;; Γ '|-x' t : T " (at level 50, Γ, t, T at next level).
@@ -11,6 +12,8 @@ Open Scope s_scope.
 Section XTyping.
 
 Context `{Sort_notion : Sorts.notion}.
+
+Declare Scope x_scope.
 
 Inductive typing (Σ : sglobal_context) (Γ : scontext) : sterm -> sterm -> Type :=
 | type_Rel n :
@@ -222,6 +225,8 @@ Derive Signature for wf.
 Derive Signature for eq_term.
 
 End XTyping.
+
+Declare Scope x_scope.
 
 Notation " Σ ;;; Γ '|-x' t : T " :=
   (@typing _ Σ Γ t T) (at level 50, Γ, t, T at next level) : x_scope.

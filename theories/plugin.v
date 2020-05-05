@@ -1,26 +1,27 @@
 (* Translation procedure *)
-Require Import TypingFlags.Loader.
-Set Type In Type.
+Unset Universe Checking.
 
-From Coq Require Import Bool String List BinPos Compare_dec Omega.
-From Equations Require Import Equations DepElimDec.
-From Template Require Import All.
+From Coq Require Import Bool String List BinPos Compare_dec Lia Arith.
+Require Import Equations.Prop.DepElim.
+From Equations Require Import Equations.
+From MetaCoq Require Import All.
 From Translation
 Require Import util Sorts SAst SLiftSubst SCommon ITyping ITypingLemmata
 ITypingAdmissible DecideConversion XTyping Quotes Translation FundamentalLemma
 FinalTranslation FullQuote XTypingLemmata IChecking
 XChecking Equality plugin_util plugin_checkers.
 Import MonadNotation.
+Import ListNotations.
 
 
 (* Not Tail-recursive for the tile being *)
 (* TODO Use monad_map? *)
-Fixpoint map_tsl Σ axoc l {struct l} : TemplateMonad (list term) :=
+Fixpoint map_tsl Σ G axoc l {struct l} : TemplateMonad (list term) :=
   match l with
   | t :: l =>
-    match tsl_rec (2 ^ 18) Σ [] t axoc with
-    | FinalTranslation.Success _ t =>
-      l <- map_tsl Σ axoc l ;;
+    match tsl_rec (2 ^ 18) Σ G [] t axoc with
+    | FinalTranslation.Success t =>
+      l <- map_tsl Σ G axoc l ;;
       ret (t :: l)
     | _ => tmFail "Cannot refine obligation into a Coq term"
     end
@@ -72,10 +73,11 @@ Definition emptyTC := {|
 
 Notation ε := emptyTC.
 
-Fixpoint tc_ctor_ m (Σ : global_context) ind Θ (ctors : list (prod (prod ident term) nat)) : TemplateMonad tsl_ctx :=
+Fixpoint tc_ctor_ m (Σ : global_env) (G : universes_graph) ind Θ
+  (ctors : list (prod (prod ident term) nat)) : TemplateMonad tsl_ctx :=
   match ctors with
   | t :: l =>
-    Θ <- tc_ctor_ (S m) Σ ind Θ l ;;
+    Θ <- tc_ctor_ (S m) Σ G ind Θ l ;;
     let Σi := Σi Θ in
     let indt := indt Θ in
     let constt := constt Θ in
@@ -83,7 +85,7 @@ Fixpoint tc_ctor_ m (Σ : global_context) ind Θ (ctors : list (prod (prod ident
     let axoc := axoc Θ in
     (* let '(id, ty, m) := t in *)
     let '(pair (pair id ty) _) := t in
-    ety <- tmEval lazy (fullquote (2 ^ 18) Σ [] (LiftSubst.subst (tInd ind []) 0 ty) indt constt cot) ;;
+    ety <- tmEval lazy (fullquote (2 ^ 18) Σ G [] (LiftSubst.subst1 (tInd ind []) 0 ty) indt constt cot) ;;
     match ety with
     | Success ety =>
       ret {|
@@ -111,11 +113,11 @@ Definition getTm ident : TemplateMonad term :=
   end.
 
 (* Get the global context from an ident *)
-Definition getCtx (ident : ident) : TemplateMonad global_context :=
+Definition getCtx (ident : ident) : TemplateMonad global_env :=
   tm <- getTm ident ;;
   q  <- tmUnquote tm ;;
   prog <- tmQuoteRec (my_projT2 q : my_projT1 q) ;;
-  ret (pair (Datatypes.fst prog) init_graph).
+  ret (Datatypes.fst prog).
 
 (* Note we could optimise by checking the generated context on the go.
    Then we would carry around the proof that it is correct and we would only
@@ -132,29 +134,25 @@ Definition TranslateConstant Θ ident : TemplateMonad tsl_ctx :=
   info <- tmAbout ident ;;
   match info with
   | Some (ConstRef kername) =>
-    entry <- tmQuoteConstant ident false ;;
-    match entry with
-    | DefinitionEntry {| definition_entry_type := ty |} =>
-      ety <- tmEval lazy (fullquote (2 ^ 18) Σ [] ty indt constt cot) ;;
-      match ety with
-      | Success ety =>
-        tmEval all {|
-            Σi := (decl kername ety) :: Σi ;
-            indt := indt ;
-            constt := (kername --> sAx kername) constt ;
-            cot := cot ;
-            axoc := (kername --> tConst kername []) axoc
-          |}
-      | Error e => tmPrint e ;; tmFail "Cannot elaborate to ETT term"
-      end
-    | _ => tmFail ("Not a constant " @ ident)
+    cbody <- tmQuoteConstant ident false ;;
+    ety <- tmEval lazy (fullquote (2 ^ 18) Σ init_graph [] cbody.(cst_type) indt constt cot) ;;
+    match ety with
+    | Success ety =>
+      tmEval all {|
+          Σi := (decl kername ety) :: Σi ;
+          indt := indt ;
+          constt := (kername --> sAx kername) constt ;
+          cot := cot ;
+          axoc := (kername --> tConst kername []) axoc
+        |}
+    | Error e => tmPrint e ;; tmFail "Cannot elaborate to ETT term"
     end
   | Some (IndRef ({| inductive_mind := kername ; inductive_ind := n |} as ind)) =>
     mind <- tmQuoteInductive kername ;;
     match nth_error (ind_bodies mind) n with
     | Some {| ind_type := ty ; ind_ctors := ctors |} =>
       (* TODO Deal with constructors *)
-      ety <- tmEval lazy (fullquote (2 ^ 18) Σ [] ty indt constt cot) ;;
+      ety <- tmEval lazy (fullquote (2 ^ 18) Σ init_graph [] ty indt constt cot) ;;
       match ety with
       | Success ety =>
         Θ <- tmEval all {|
@@ -164,7 +162,7 @@ Definition TranslateConstant Θ ident : TemplateMonad tsl_ctx :=
             cot := cot ;
             axoc := (kername --> tInd ind []) axoc
           |} ;;
-        Θ <- tc_ctor Σ ind Θ ctors ;;
+        Θ <- tc_ctor Σ init_graph ind Θ ctors ;;
         tmEval all Θ
       | Error e => tmPrint e ;; tmFail "Cannot elaborate to ETT term"
       end
@@ -173,7 +171,7 @@ Definition TranslateConstant Θ ident : TemplateMonad tsl_ctx :=
   | _ => tmFail ("Not a defined constant" @ ident)
   end.
 
-Definition Translate Θ ident : TemplateMonad () :=
+Definition Translate Θ ident : TemplateMonad unit :=
   Σ <- getCtx ident ;;
   Σi <- tmEval all (Σi Θ) ;;
   indt <- tmEval all (indt Θ) ;;
@@ -181,12 +179,12 @@ Definition Translate Θ ident : TemplateMonad () :=
   cot <- tmEval all (cot Θ) ;;
   axoc <- tmEval all (axoc Θ) ;;
   (* First we quote the term to its TC representation *)
-  entry <- tmQuoteConstant ident false ;;
-  match entry with
-  | DefinitionEntry {| definition_entry_body := tm ; definition_entry_type := ty |} =>
+  cbody <- tmQuoteConstant ident false ;;
+  match cbody with
+  | {| cst_type := ty ; cst_body := Some tm |} =>
     (* We get its type and body and elaborate them to ETT terms *)
-    pretm <- tmEval lazy (fullquote (2 ^ 18) Σ [] tm indt constt cot) ;;
-    prety <- tmEval lazy (fullquote (2 ^ 18) Σ [] ty indt constt cot) ;;
+    pretm <- tmEval lazy (fullquote (2 ^ 18) Σ init_graph [] tm indt constt cot) ;;
+    prety <- tmEval lazy (fullquote (2 ^ 18) Σ init_graph [] ty indt constt cot) ;;
     match pretm, prety with
     | Success tm, Success ty =>
       (* We pick the name framework of obligations *)
@@ -195,12 +193,12 @@ Definition Translate Θ ident : TemplateMonad () :=
       (* We then typecheck the term in ETT *)
       let ch := ettcheck Σi [] tm ty in
       match ch as o
-      return (ch = o -> TemplateMonad ())
+      return (ch = o -> TemplateMonad unit)
       with
       | Some obl => fun (eq : ch = Some obl) =>
         (* We now have the list of obligations *)
         (* We push them into TC *)
-        tc_obl <- map_tsl Σ axoc obl ;;
+        tc_obl <- map_tsl Σ init_graph axoc obl ;;
         tc_obl <- tmEval lazy tc_obl ;;
         (* We ask the user to prove the obligations in Coq *)
         axoc <- map_lemma axoc name tc_obl ;;
@@ -209,12 +207,12 @@ Definition Translate Θ ident : TemplateMonad () :=
         let Σ' := extend Σi obname obl in
         (* First we check freshness of Σ' *)
         match isallfresh Σ' as b
-        return (isallfresh Σ' = b -> TemplateMonad ())
+        return (isallfresh Σ' = b -> TemplateMonad unit)
         with
         | true => fun eqf =>
           (* Then we check Σ' in ETT *)
           match ettcheck_ctx Σ' as b
-          return (ettcheck_ctx Σ' = b -> TemplateMonad ())
+          return (ettcheck_ctx Σ' = b -> TemplateMonad unit)
           with
           | true => fun eqcx =>
             (* We now have a derivation of our term in ETT *)
@@ -223,19 +221,19 @@ Definition Translate Θ ident : TemplateMonad () :=
             let der := ettcheck_nil_sound obname eq xhg in
             (* Next we check the global context makes sense in ITT *)
             match ittcheck_ctx (2 ^ 18) Σ' as b
-            return (ittcheck_ctx (2 ^ 18) Σ' = b -> TemplateMonad ())
+            return (ittcheck_ctx (2 ^ 18) Σ' = b -> TemplateMonad unit)
             with
             | true => fun eqc =>
               let hg := ittcheck_ctx_sound eqc hf in
               let '(_ ; itt_tm ; _) := type_translation hg der istrans_nil in
-              t <- tmEval lazy (tsl_rec (2 ^ 18) Σ [] itt_tm axoc) ;;
+              t <- tmEval lazy (tsl_rec (2 ^ 18) Σ init_graph [] itt_tm axoc) ;;
               match t with
-              | FinalTranslation.Success _ t =>
+              | FinalTranslation.Success t =>
                 tname <- tmEval all (ident @ "ᵗ") ;;
                 tmMkDefinition tname t ;;
                 msg <- tmEval all ("Successfully generated " @ tname) ;;
                 tmPrint msg
-              | FinalTranslation.Error _ e =>
+              | FinalTranslation.Error e =>
                 msg <- tmEval all ("Cannot translate from ITT to TemplateCoq: " @
                   match e with
                   | FinalTranslation.NotEnoughFuel => "Not enough fuel"

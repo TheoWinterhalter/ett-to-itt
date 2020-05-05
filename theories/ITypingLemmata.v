@@ -1,9 +1,11 @@
-From Coq Require Import Bool String List BinPos Compare_dec Omega.
-From Equations Require Import Equations DepElimDec.
-From Template Require Import Ast utils Typing.
+From Coq Require Import Bool String List BinPos Compare_dec Lia Arith.
+Require Import Equations.Prop.DepElim.
+From Equations Require Import Equations.
+From MetaCoq Require Import Ast utils Typing AstUtils.
 From Translation
 Require Import util SAst SLiftSubst SCommon Conversion
                ITyping ITypingInversions.
+Import ListNotations.
 
 (* Lemmata about typing *)
 
@@ -51,7 +53,7 @@ Proof.
   intros Σ Γ t T h.
   dependent induction h.
   all: try (cbn in * ; repeat erewrite_assumption ; reflexivity).
-  unfold closed_above. case_eq (n <? #|Γ|) ; intro e ; bprop e ; try myomega.
+  unfold closed_above. case_eq (n <? #|Γ|) ; intro e ; bprop e ; try mylia.
   reflexivity.
 Defined.
 
@@ -91,9 +93,9 @@ Proof.
   - cbn in *. assumption.
   - rewrite substl_cons. apply IHcl.
     apply closed_above_subst.
-    + myomega.
+    + mylia.
     + assumption.
-    + replace (#|l| - 0) with #|l| by myomega. assumption.
+    + replace (#|l| - 0) with #|l| by mylia. assumption.
 Defined.
 
 Fact rev_cons :
@@ -147,8 +149,8 @@ Proof.
   end.
   assert (h : forall l acc, #|aux l acc| = (#|acc| + #|l|)%nat).
   { intro l. induction l ; intro acc.
-    - cbn. myomega.
-    - cbn. rewrite IHl. cbn. myomega.
+    - cbn. mylia.
+    - cbn. rewrite IHl. cbn. mylia.
   }
   intro l. apply h.
 Defined.
@@ -164,8 +166,8 @@ Proof.
   end.
   assert (h : forall l acc, #|aux l acc| = (#|acc| + #|l|)%nat).
   { intro l. induction l ; intro acc.
-    - cbn. myomega.
-    - cbn. rewrite IHl. cbn. myomega.
+    - cbn. mylia.
+    - cbn. rewrite IHl. cbn. mylia.
   }
   intro l. apply h.
 Defined.
@@ -211,11 +213,11 @@ Proof.
   intro Σ. induction Σ ; intros id ty d h hf.
   - cbn in h. discriminate h.
   - cbn in h. dependent destruction hf.
-    case_eq (ident_eq id (dname d0)) ;
+    case_eq (ident_eq id (dname a)) ;
     intro e ; rewrite e in h.
     + inversion h as [ h' ]. subst. clear h.
       destruct (ident_eq_spec id (dname d)).
-      * subst. destruct (ident_eq_spec (dname d) (dname d0)).
+      * subst. destruct (ident_eq_spec (dname d) (dname a)).
         -- exfalso. easy.
         -- easy.
       * reflexivity.
@@ -378,16 +380,16 @@ with wf_lift {Σ Γ Δ Ξ} (h : wf Σ (Γ ,,, Ξ)) {struct h} :
 Proof.
   - { dependent destruction h ; intros hΣ hwf.
       - cbn. case_eq (#|Ξ| <=? n) ; intro e ; bprop e.
-        + rewrite liftP3 by myomega.
-          replace (#|Δ| + S n)%nat with (S (#|Δ| + n)) by myomega.
+        + rewrite liftP3 by mylia.
+          replace (#|Δ| + S n)%nat with (S (#|Δ| + n)) by mylia.
           eapply meta_conv.
           * eapply type_Rel.
             eapply wf_lift ; assumption.
           * f_equal. f_equal.
             erewrite 3!safe_nth_ge'
-              by (try rewrite lift_context_length ; myomega).
+              by (try rewrite lift_context_length ; mylia).
             eapply safe_nth_cong_irr.
-            rewrite lift_context_length. myomega.
+            rewrite lift_context_length. mylia.
         + eapply meta_conv.
           * eapply type_Rel. eapply wf_lift ; assumption.
           * erewrite 2!safe_nth_lt.
@@ -413,18 +415,18 @@ Proof.
       - cbn. eapply type_Refl ; eih.
       - change (#|Ξ|) with (0 + #|Ξ|)%nat.
         rewrite substP1.
-        replace (S (0 + #|Ξ|)) with (1 + #|Ξ|)%nat by myomega.
+        replace (S (0 + #|Ξ|)) with (1 + #|Ξ|)%nat by mylia.
         rewrite substP1.
         cbn. eapply type_J ; try eih.
         + cbn. unfold ssnoc. cbn.
           f_equal. f_equal.
-          * replace (S #|Ξ|) with (1 + #|Ξ|)%nat by myomega.
-            apply liftP2. myomega.
-          * replace (S #|Ξ|) with (1 + #|Ξ|)%nat by myomega.
-            apply liftP2. myomega.
-        + replace (S (S #|Ξ|)) with (1 + (S (0 + #|Ξ|)))%nat by myomega.
+          * replace (S #|Ξ|) with (1 + #|Ξ|)%nat by mylia.
+            apply liftP2. mylia.
+          * replace (S #|Ξ|) with (1 + #|Ξ|)%nat by mylia.
+            apply liftP2. mylia.
+        + replace (S (S #|Ξ|)) with (1 + (S (0 + #|Ξ|)))%nat by mylia.
           rewrite <- substP1.
-          replace (1 + (0 + #|Ξ|))%nat with (S (0 + #|Ξ|))%nat by myomega.
+          replace (1 + (0 + #|Ξ|))%nat with (S (0 + #|Ξ|))%nat by mylia.
           change (sRefl (lift #|Δ| #|Ξ| A0) (lift #|Δ| #|Ξ| u))
             with (lift #|Δ| #|Ξ| (sRefl A0 u)).
           rewrite <- substP1. reflexivity.
@@ -437,31 +439,31 @@ Proof.
       - cbn. eapply type_HeqTransport ; eih.
       - cbn. eapply type_CongProd ; try eih.
         cbn. f_equal.
-        + rewrite <- liftP2 by myomega.
+        + rewrite <- liftP2 by mylia.
           change (S #|Ξ|) with (0 + (S #|Ξ|))%nat at 1.
           rewrite substP1. cbn. reflexivity.
-        + rewrite <- liftP2 by myomega.
+        + rewrite <- liftP2 by mylia.
           change (S #|Ξ|) with (0 + (S #|Ξ|))%nat at 1.
           rewrite substP1. cbn. reflexivity.
       - cbn. eapply type_CongLambda ; try eih.
         + cbn. f_equal.
-          * rewrite <- liftP2 by myomega.
+          * rewrite <- liftP2 by mylia.
             change (S #|Ξ|) with (0 + (S #|Ξ|))%nat at 1.
             rewrite substP1. cbn. reflexivity.
-          * rewrite <- liftP2 by myomega.
+          * rewrite <- liftP2 by mylia.
             change (S #|Ξ|) with (0 + (S #|Ξ|))%nat at 1.
             rewrite substP1. cbn. reflexivity.
         + cbn. f_equal.
-          * rewrite <- liftP2 by myomega.
+          * rewrite <- liftP2 by mylia.
             change (S #|Ξ|) with (0 + (S #|Ξ|))%nat at 1.
             rewrite substP1. cbn. reflexivity.
-          * rewrite <- liftP2 by myomega.
+          * rewrite <- liftP2 by mylia.
             change (S #|Ξ|) with (0 + (S #|Ξ|))%nat at 1.
             rewrite substP1. cbn. reflexivity.
-          * rewrite <- liftP2 by myomega.
+          * rewrite <- liftP2 by mylia.
             change (S #|Ξ|) with (0 + (S #|Ξ|))%nat at 1.
             rewrite substP1. cbn. reflexivity.
-          * rewrite <- liftP2 by myomega.
+          * rewrite <- liftP2 by mylia.
             change (S #|Ξ|) with (0 + (S #|Ξ|))%nat at 1.
             rewrite substP1. cbn. reflexivity.
       - cbn.
@@ -472,26 +474,26 @@ Proof.
         rewrite 2!substP1.
         eapply type_CongApp ; eih.
         cbn. f_equal.
-        + rewrite <- liftP2 by myomega.
+        + rewrite <- liftP2 by mylia.
           change (S #|Ξ|) with (0 + (S #|Ξ|))%nat at 1.
           rewrite substP1. cbn. reflexivity.
-        + rewrite <- liftP2 by myomega.
+        + rewrite <- liftP2 by mylia.
           change (S #|Ξ|) with (0 + (S #|Ξ|))%nat at 1.
           rewrite substP1. cbn. reflexivity.
       - cbn. eapply type_CongSum ; try eih.
         cbn. f_equal.
-        + rewrite <- liftP2 by myomega.
+        + rewrite <- liftP2 by mylia.
           change (S #|Ξ|) with (0 + (S #|Ξ|))%nat at 1.
           rewrite substP1. cbn. reflexivity.
-        + rewrite <- liftP2 by myomega.
+        + rewrite <- liftP2 by mylia.
           change (S #|Ξ|) with (0 + (S #|Ξ|))%nat at 1.
           rewrite substP1. cbn. reflexivity.
       - cbn. eapply type_CongPair ; eih.
         + cbn. f_equal.
-          * rewrite <- liftP2 by myomega.
+          * rewrite <- liftP2 by mylia.
             change (S #|Ξ|) with (0 + (S #|Ξ|))%nat at 1.
             rewrite substP1. cbn. reflexivity.
-          * rewrite <- liftP2 by myomega.
+          * rewrite <- liftP2 by mylia.
             change (S #|Ξ|) with (0 + (S #|Ξ|))%nat at 1.
             rewrite substP1. cbn. reflexivity.
         + cbn. f_equal.
@@ -505,10 +507,10 @@ Proof.
           rewrite substP1. reflexivity.
       - cbn. eapply type_CongPi1 ; eih.
         cbn. f_equal.
-        + rewrite <- liftP2 by myomega.
+        + rewrite <- liftP2 by mylia.
           change (S #|Ξ|) with (0 + (S #|Ξ|))%nat at 1.
           rewrite substP1. cbn. reflexivity.
-        + rewrite <- liftP2 by myomega.
+        + rewrite <- liftP2 by mylia.
           change (S #|Ξ|) with (0 + (S #|Ξ|))%nat at 1.
           rewrite substP1. cbn. reflexivity.
       - cbn.
@@ -516,10 +518,10 @@ Proof.
         rewrite 2!substP1.
         eapply type_CongPi2 ; eih.
         cbn. f_equal.
-        + rewrite <- liftP2 by myomega.
+        + rewrite <- liftP2 by mylia.
           change (S #|Ξ|) with (0 + (S #|Ξ|))%nat at 1.
           rewrite substP1. cbn. reflexivity.
-        + rewrite <- liftP2 by myomega.
+        + rewrite <- liftP2 by mylia.
           change (S #|Ξ|) with (0 + (S #|Ξ|))%nat at 1.
           rewrite substP1. cbn. reflexivity.
       - cbn. eapply type_CongEq ; eih.
@@ -551,7 +553,7 @@ Proof.
 
     Unshelve.
     all: try rewrite !length_cat ; try rewrite length_cat in isdecl ;
-      try rewrite lift_context_length ; myomega.
+      try rewrite lift_context_length ; mylia.
 Defined.
 
 Corollary typing_lift01 :
@@ -666,13 +668,13 @@ Proof.
   - { intros hg hu.
       dependent destruction h.
       - cbn. case_eq (#|Δ| ?= n) ; intro e ; bprop e.
-        + assert (h : n >= #|Δ|) by myomega.
+        + assert (h : n >= #|Δ|) by mylia.
           rewrite safe_nth_ge' with (h0 := h).
-          assert (n - #|Δ| = 0) by myomega.
+          assert (n - #|Δ| = 0) by mylia.
           set (ge := ge_sub isdecl h).
           generalize ge.
           rewrite H0. intro ge'.
-          cbn. rewrite substP3 by myomega.
+          cbn. rewrite substP3 by mylia.
           subst.
           replace #|Δ| with #|subst_context u Δ|
             by (now rewrite subst_context_length).
@@ -680,27 +682,27 @@ Proof.
           * cbn. assumption.
           * assumption.
           * eapply wf_subst ; eassumption.
-        + assert (h : n >= #|Δ|) by myomega.
+        + assert (h : n >= #|Δ|) by mylia.
           rewrite safe_nth_ge' with (h0 := h).
           set (ge := ge_sub isdecl h).
           destruct n ; try easy.
-          rewrite substP3 by myomega.
+          rewrite substP3 by mylia.
           generalize ge.
-          replace (S n - #|Δ|) with (S (n - #|Δ|)) by myomega.
+          replace (S n - #|Δ|) with (S (n - #|Δ|)) by mylia.
           cbn. intro ge'.
           eapply meta_conv.
           * eapply type_Rel. eapply wf_subst ; eassumption.
           * erewrite safe_nth_ge'.
             f_equal. eapply safe_nth_cong_irr.
             rewrite subst_context_length. reflexivity.
-        + assert (h : n < #|Δ|) by myomega.
+        + assert (h : n < #|Δ|) by mylia.
           rewrite @safe_nth_lt with (isdecl' := h).
           match goal with
           | |- _ ;;; _ |-i _ : ?t{?d := ?u} =>
             replace (subst u d t) with (t{((S n) + (#|Δ| - (S n)))%nat := u})
-              by (f_equal ; myomega)
+              by (f_equal ; mylia)
           end.
-          rewrite substP2 by myomega.
+          rewrite substP2 by mylia.
           eapply meta_conv.
           * eapply type_Rel.
             eapply wf_subst ; eassumption.
@@ -729,18 +731,18 @@ Proof.
       - cbn.
         change (#|Δ|) with (0 + #|Δ|)%nat.
         rewrite substP4.
-        replace (S (0 + #|Δ|)) with (1 + #|Δ|)%nat by myomega.
+        replace (S (0 + #|Δ|)) with (1 + #|Δ|)%nat by mylia.
         rewrite substP4.
         eapply type_J ; esh.
         + cbn. unfold ssnoc. cbn.
           f_equal. f_equal.
-          * replace (S #|Δ|) with (1 + #|Δ|)%nat by myomega.
-            apply substP2. myomega.
-          * replace (S #|Δ|) with (1 + #|Δ|)%nat by myomega.
-            apply substP2. myomega.
-        + replace (S (S #|Δ|)) with (1 + (S (0 + #|Δ|)))%nat by myomega.
+          * replace (S #|Δ|) with (1 + #|Δ|)%nat by mylia.
+            apply substP2. mylia.
+          * replace (S #|Δ|) with (1 + #|Δ|)%nat by mylia.
+            apply substP2. mylia.
+        + replace (S (S #|Δ|)) with (1 + (S (0 + #|Δ|)))%nat by mylia.
           rewrite <- substP4.
-          replace (1 + (0 + #|Δ|))%nat with (S (0 + #|Δ|))%nat by myomega.
+          replace (1 + (0 + #|Δ|))%nat with (S (0 + #|Δ|))%nat by mylia.
           change (sRefl (A0 {0 + #|Δ| := u}) (u0 {0 + #|Δ| := u}))
             with ((sRefl A0 u0){ 0 + #|Δ| := u}).
           rewrite <- substP4. reflexivity.
@@ -755,31 +757,31 @@ Proof.
       - cbn. eapply type_HeqTransport ; esh.
       - cbn. eapply type_CongProd ; esh.
         cbn. f_equal.
-        + rewrite <- substP2 by myomega.
+        + rewrite <- substP2 by mylia.
           change (S #|Δ|) with (0 + (S #|Δ|))%nat at 1.
           rewrite substP4. cbn. reflexivity.
-        + rewrite <- substP2 by myomega.
+        + rewrite <- substP2 by mylia.
           change (S #|Δ|) with (0 + (S #|Δ|))%nat at 1.
           rewrite substP4. cbn. reflexivity.
       - cbn. eapply type_CongLambda ; esh.
         + cbn. f_equal.
-          * rewrite <- substP2 by myomega.
+          * rewrite <- substP2 by mylia.
             change (S #|Δ|) with (0 + (S #|Δ|))%nat at 1.
             rewrite substP4. cbn. reflexivity.
-          * rewrite <- substP2 by myomega.
+          * rewrite <- substP2 by mylia.
             change (S #|Δ|) with (0 + (S #|Δ|))%nat at 1.
             rewrite substP4. cbn. reflexivity.
         + cbn. f_equal.
-          * rewrite <- substP2 by myomega.
+          * rewrite <- substP2 by mylia.
             change (S #|Δ|) with (0 + (S #|Δ|))%nat at 1.
             rewrite substP4. cbn. reflexivity.
-          * rewrite <- substP2 by myomega.
+          * rewrite <- substP2 by mylia.
             change (S #|Δ|) with (0 + (S #|Δ|))%nat at 1.
             rewrite substP4. cbn. reflexivity.
-          * rewrite <- substP2 by myomega.
+          * rewrite <- substP2 by mylia.
             change (S #|Δ|) with (0 + (S #|Δ|))%nat at 1.
             rewrite substP4. cbn. reflexivity.
-          * rewrite <- substP2 by myomega.
+          * rewrite <- substP2 by mylia.
             change (S #|Δ|) with (0 + (S #|Δ|))%nat at 1.
             rewrite substP4. cbn. reflexivity.
       - cbn.
@@ -787,26 +789,26 @@ Proof.
         rewrite 2!substP4. cbn.
         eapply type_CongApp ; esh.
         cbn. f_equal.
-        + rewrite <- substP2 by myomega.
+        + rewrite <- substP2 by mylia.
           change (S #|Δ|) with (0 + (S #|Δ|))%nat at 1.
           rewrite substP4. cbn. reflexivity.
-        + rewrite <- substP2 by myomega.
+        + rewrite <- substP2 by mylia.
           change (S #|Δ|) with (0 + (S #|Δ|))%nat at 1.
           rewrite substP4. cbn. reflexivity.
       - cbn. eapply type_CongSum ; esh.
         cbn. f_equal.
-        + rewrite <- substP2 by myomega.
+        + rewrite <- substP2 by mylia.
           change (S #|Δ|) with (0 + (S #|Δ|))%nat at 1.
           rewrite substP4. cbn. reflexivity.
-        + rewrite <- substP2 by myomega.
+        + rewrite <- substP2 by mylia.
           change (S #|Δ|) with (0 + (S #|Δ|))%nat at 1.
           rewrite substP4. cbn. reflexivity.
       - cbn. eapply type_CongPair ; esh.
         + cbn. f_equal.
-          * rewrite <- substP2 by myomega.
+          * rewrite <- substP2 by mylia.
             change (S #|Δ|) with (0 + (S #|Δ|))%nat at 1.
             rewrite substP4. cbn. reflexivity.
-          * rewrite <- substP2 by myomega.
+          * rewrite <- substP2 by mylia.
             change (S #|Δ|) with (0 + (S #|Δ|))%nat at 1.
             rewrite substP4. cbn. reflexivity.
         + cbn. f_equal.
@@ -820,10 +822,10 @@ Proof.
           rewrite substP4. reflexivity.
       - cbn. eapply type_CongPi1 ; esh.
         cbn. f_equal.
-        + rewrite <- substP2 by myomega.
+        + rewrite <- substP2 by mylia.
           change (S #|Δ|) with (0 + (S #|Δ|))%nat at 1.
           rewrite substP4. cbn. reflexivity.
-        + rewrite <- substP2 by myomega.
+        + rewrite <- substP2 by mylia.
           change (S #|Δ|) with (0 + (S #|Δ|))%nat at 1.
           rewrite substP4. cbn. reflexivity.
       - cbn.
@@ -831,10 +833,10 @@ Proof.
         rewrite 2!substP4. cbn.
         eapply type_CongPi2 ; esh.
         cbn. f_equal.
-        + rewrite <- substP2 by myomega.
+        + rewrite <- substP2 by mylia.
           change (S #|Δ|) with (0 + (S #|Δ|))%nat at 1.
           rewrite substP4. cbn. reflexivity.
-        + rewrite <- substP2 by myomega.
+        + rewrite <- substP2 by mylia.
           change (S #|Δ|) with (0 + (S #|Δ|))%nat at 1.
           rewrite substP4. cbn. reflexivity.
       - cbn. eapply type_CongEq ; esh.
@@ -863,7 +865,7 @@ Proof.
     }
 
   Unshelve.
-  all: try rewrite !length_cat ; try rewrite !subst_context_length ; myomega.
+  all: try rewrite !length_cat ; try rewrite !subst_context_length ; mylia.
 Defined.
 
 Corollary typing_subst :
@@ -934,13 +936,13 @@ Fact nth_error_error :
     n >= #|l|.
 Proof.
   intros A l. induction l.
-  - intros. cbn. myomega.
+  - intros. cbn. mylia.
   - intros n h. cbn.
     destruct n.
     + cbn in h. inversion h.
     + inversion h as [e].
       specialize (IHl n e).
-      myomega.
+      mylia.
 Defined.
 
 Fact rev_map_nth_error :
@@ -955,17 +957,17 @@ Proof.
       rewrite rev_map_cons.
       rewrite nth_error_app2.
       * cbn. rewrite rev_map_length.
-        replace (#|l| - 0 - #|l|) with 0 by myomega.
+        replace (#|l| - 0 - #|l|) with 0 by mylia.
         cbn. reflexivity.
-      * rewrite rev_map_length. cbn. myomega.
+      * rewrite rev_map_length. cbn. mylia.
     + cbn in hn.
       rewrite rev_map_cons.
       rewrite nth_error_app1.
-      * erewrite IHl by eassumption. reflexivity.
+      * cbn. erewrite IHl by eassumption. reflexivity.
       * rewrite rev_map_length. cbn.
         assert (n < #|l|).
         { apply nth_error_Some. rewrite hn. discriminate. }
-        myomega.
+        mylia.
 Defined.
 
 Lemma istype_type :

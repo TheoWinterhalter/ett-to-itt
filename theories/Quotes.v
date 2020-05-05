@@ -1,9 +1,11 @@
 (* Quotations of terms *)
 
-From Coq Require Import Bool String List BinPos Compare_dec Omega.
-From Equations Require Import Equations DepElimDec.
-From Template Require Import Ast Typing Checker.
+From Coq Require Import Bool String List BinPos Compare_dec Lia.
+Require Import Equations.Prop.DepElim.
+From Equations Require Import Equations.
+From MetaCoq Require Import All Ast Typing Checker.
 From Translation Require Import util.
+Import ListNotations.
 
 Definition epair {A} {B : A -> Type} u v : ∑ x, B x :=
   {| pi1 := u ; pi2 := v |}.
