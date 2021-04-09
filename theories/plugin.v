@@ -14,7 +14,7 @@ Import MonadNotation.
 Import ListNotations.
 
 
-(* Not Tail-recursive for the tile being *)
+(* Not Tail-recursive for the time being *)
 (* TODO Use monad_map? *)
 Fixpoint map_tsl Σ G axoc l {struct l} : TemplateMonad (list term) :=
   match l with
@@ -57,16 +57,16 @@ Definition type_translation {Σ} hg {Γ t A} h {Γ'} hΓ :=
 (* Translation context *)
 Record tsl_ctx := {
   Σi : sglobal_context ;
-  indt : assoc sterm ;
-  constt : assoc sterm ;
+  indt : assock sterm ;
+  constt : assock sterm ;
   cot : assocn sterm ;
   axoc : assoc term
 }.
 
 Definition emptyTC := {|
   Σi := [] ;
-  indt := [< >] ;
-  constt := [< >] ;
+  indt := emptyk ;
+  constt := emptyk ;
   cot := emptyn ;
   axoc := [< >]
 |}.
@@ -104,12 +104,12 @@ Notation tc_ctor := (tc_ctor_ 0).
 
 (* Get term from ident *)
 Definition getTm ident : TemplateMonad term :=
-  info <- tmAbout ident ;;
+  info <- tmLocate ident ;;
   match info with
-  | Some (ConstRef kername) => ret (tConst kername [])
-  | Some (IndRef ind) => ret (tInd ind [])
-  | Some (ConstructRef ind n) => ret (tConstruct ind n [])
-  | None => tmFail ("Unknown " @ ident)
+  | [ ConstRef kername ] => ret (tConst kername [])
+  | [ IndRef ind ] => ret (tInd ind [])
+  | [ ConstructRef ind n ] => ret (tConstruct ind n [])
+  | _ => tmFail ("Unknown " @ ident)
   end.
 
 (* Get the global context from an ident *)
@@ -131,23 +131,23 @@ Definition TranslateConstant Θ ident : TemplateMonad tsl_ctx :=
   let constt := constt Θ in
   let cot := cot Θ in
   let axoc := axoc Θ in
-  info <- tmAbout ident ;;
+  info <- tmLocate ident ;;
   match info with
-  | Some (ConstRef kername) =>
-    cbody <- tmQuoteConstant ident false ;;
+  | [ ConstRef kername ] =>
+    cbody <- tmQuoteConstant kername false ;;
     ety <- tmEval lazy (fullquote (2 ^ 18) Σ init_graph [] cbody.(cst_type) indt constt cot) ;;
     match ety with
     | Success ety =>
       tmEval all {|
-          Σi := (decl kername ety) :: Σi ;
+          Σi := (decl ident ety) :: Σi ;
           indt := indt ;
-          constt := (kername --> sAx kername) constt ;
+          constt := (aconsk kername (sAx ident)) constt ;
           cot := cot ;
-          axoc := (kername --> tConst kername []) axoc
+          axoc := (aconsk kername (tConst kername [])) axoc
         |}
     | Error e => tmPrint e ;; tmFail "Cannot elaborate to ETT term"
     end
-  | Some (IndRef ({| inductive_mind := kername ; inductive_ind := n |} as ind)) =>
+  | [ IndRef ({| inductive_mind := kername ; inductive_ind := n |} as ind) ] =>
     mind <- tmQuoteInductive kername ;;
     match nth_error (ind_bodies mind) n with
     | Some {| ind_type := ty ; ind_ctors := ctors |} =>

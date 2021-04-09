@@ -10,10 +10,10 @@ Import ListNotations.
 Definition epair {A} {B : A -> Type} u v : ∑ x, B x :=
   {| pi1 := u ; pi2 := v |}.
 
-Quote Definition tSum := @pp_sigT.
-Quote Definition tPair := @epair.
-Quote Definition tPi1 := @pi1.
-Quote Definition tPi2 := @pi2.
+MetaCoq Quote Definition tSum := @pp_sigT.
+MetaCoq Quote Definition tPair := @epair.
+MetaCoq Quote Definition tPi1 := @pi1.
+MetaCoq Quote Definition tPi2 := @pi2.
 
 Definition mkSum (A B : term) : term :=
   tApp tSum [ A ;  B ].
@@ -50,12 +50,12 @@ Definition transport {T1 T2 : Type} (p : T1 = T2) (t : T1) : T2 :=
 Axiom K : forall {A} {x : A} (p : x = x), p = eq_refl.
 Axiom funext : forall {A B} {f g : forall (x : A), B x}, (forall x, f x = g x) -> f = g.
 
-Quote Definition tEq := @eq.
-Quote Definition tRefl := @eq_refl.
-Quote Definition tJ := J.
-Quote Definition tTransport := @transport.
-Quote Definition tK := @K.
-Quote Definition tFunext := @funext.
+MetaCoq Quote Definition tEq := @eq.
+MetaCoq Quote Definition tRefl := @eq_refl.
+MetaCoq Quote Definition tJ := J.
+MetaCoq Quote Definition tTransport := @transport.
+MetaCoq Quote Definition tK := @K.
+MetaCoq Quote Definition tFunext := @funext.
 
 Definition mkEq (A u v : term) : term :=
   tApp tEq [ A ; u ; v ].
@@ -350,27 +350,27 @@ Proof.
   now destruct e.
 Defined.
 
-Quote Definition tHeq := @heq.
-Quote Definition tHeqToEq := @heq_to_eq.
-Quote Definition tHeqRefl := @heq_refl.
-Quote Definition tHeqSym := @heq_sym.
-Quote Definition tHeqTrans := @heq_trans.
-Quote Definition tHeqTransport := @heq_transport.
-Quote Definition tPack := @Pack.
-Quote Definition tProjT1 := @ProjT1.
-Quote Definition tProjT2 := @ProjT2.
-Quote Definition tProjTe := @ProjTe.
-Quote Definition tCongProd := @cong_prod.
-Quote Definition tCongLambda := @cong_lambda.
-Quote Definition tCongApp := @cong_app.
-Quote Definition tCongSum := @cong_sum.
-Quote Definition tCongPair := @cong_pair.
-Quote Definition tCongPi1 := @cong_pi1.
-Quote Definition tCongPi2 := @cong_pi2.
-Quote Definition tCongEq := @cong_eq.
-Quote Definition tCongRefl := @cong_refl.
-Quote Definition tEqToHeq := @eq_to_heq.
-Quote Definition tHeqTypeEq := @heq_type_eq.
+MetaCoq Quote Definition tHeq := @heq.
+MetaCoq Quote Definition tHeqToEq := @heq_to_eq.
+MetaCoq Quote Definition tHeqRefl := @heq_refl.
+MetaCoq Quote Definition tHeqSym := @heq_sym.
+MetaCoq Quote Definition tHeqTrans := @heq_trans.
+MetaCoq Quote Definition tHeqTransport := @heq_transport.
+MetaCoq Quote Definition tPack := @Pack.
+MetaCoq Quote Definition tProjT1 := @ProjT1.
+MetaCoq Quote Definition tProjT2 := @ProjT2.
+MetaCoq Quote Definition tProjTe := @ProjTe.
+MetaCoq Quote Definition tCongProd := @cong_prod.
+MetaCoq Quote Definition tCongLambda := @cong_lambda.
+MetaCoq Quote Definition tCongApp := @cong_app.
+MetaCoq Quote Definition tCongSum := @cong_sum.
+MetaCoq Quote Definition tCongPair := @cong_pair.
+MetaCoq Quote Definition tCongPi1 := @cong_pi1.
+MetaCoq Quote Definition tCongPi2 := @cong_pi2.
+MetaCoq Quote Definition tCongEq := @cong_eq.
+MetaCoq Quote Definition tCongRefl := @cong_refl.
+MetaCoq Quote Definition tEqToHeq := @eq_to_heq.
+MetaCoq Quote Definition tHeqTypeEq := @heq_type_eq.
 
 Definition mkHeq (A a B b : term) : term :=
   tApp tHeq [ A ; a ; B ; b ].
@@ -402,41 +402,43 @@ Definition mkProjT2 (A1 A2 p : term) : term :=
 Definition mkProjTe (A1 A2 p : term) : term :=
   tApp tProjTe [ A1 ; A2 ; p ].
 
+Definition nAnon' := mkBindAnn nAnon Relevant.
+
 Definition mkCongProd (A1 A2 B1 B2 pA pB : term) :=
   tApp tCongProd [
     A1 ;
     A2 ;
-    (tLambda nAnon A1 B1) ;
-    (tLambda nAnon A2 B2) ;
+    (tLambda nAnon' A1 B1) ;
+    (tLambda nAnon' A2 B2) ;
     pA ;
-    (tLambda nAnon (mkPack A1 A2) pB)
+    (tLambda nAnon' (mkPack A1 A2) pB)
   ].
 
 Definition mkCongLambda (A1 A2 B1 B2 t1 t2 pA pB pt : term) :=
   tApp tCongLambda [
     A1 ;
     A2 ;
-    (tLambda nAnon A1 B1) ;
-    (tLambda nAnon A2 B2) ;
-    (tLambda nAnon A1 t1) ;
-    (tLambda nAnon A2 t2) ;
+    (tLambda nAnon' A1 B1) ;
+    (tLambda nAnon' A2 B2) ;
+    (tLambda nAnon' A1 t1) ;
+    (tLambda nAnon' A2 t2) ;
     pA ;
-    (tLambda nAnon (mkPack A1 A2) pB) ;
-    (tLambda nAnon (mkPack A1 A2) pt)
+    (tLambda nAnon' (mkPack A1 A2) pB) ;
+    (tLambda nAnon' (mkPack A1 A2) pt)
   ].
 
 Definition mkCongApp (A1 A2 B1 B2 t1 t2 u1 u2 pA pB pt pu : term) :=
   tApp tCongApp [
     A1 ;
     A2 ;
-    (tLambda nAnon A1 B1) ;
-    (tLambda nAnon A2 B2) ;
+    (tLambda nAnon' A1 B1) ;
+    (tLambda nAnon' A2 B2) ;
     t1 ;
     t2 ;
     u1 ;
     u2 ;
     pA ;
-    (tLambda nAnon (mkPack A1 A2) pB) ;
+    (tLambda nAnon' (mkPack A1 A2) pB) ;
     pt ;
     pu
   ].
@@ -445,24 +447,24 @@ Definition mkCongSum (A1 A2 B1 B2 pA pB : term) :=
   tApp tCongSum [
     A1 ;
     A2 ;
-    (tLambda nAnon A1 B1) ;
-    (tLambda nAnon A2 B2) ;
+    (tLambda nAnon' A1 B1) ;
+    (tLambda nAnon' A2 B2) ;
     pA ;
-    (tLambda nAnon (mkPack A1 A2) pB)
+    (tLambda nAnon' (mkPack A1 A2) pB)
   ].
 
 Definition mkCongPair (A1 A2 B1 B2 u1 u2 v1 v2 pA pB pu pv : term) :=
   tApp tCongPair [
     A1 ;
     A2 ;
-    (tLambda nAnon A1 B1) ;
-    (tLambda nAnon A2 B2) ;
+    (tLambda nAnon' A1 B1) ;
+    (tLambda nAnon' A2 B2) ;
     u1 ;
     u2 ;
     v1 ;
     v2 ;
     pA ;
-    (tLambda nAnon (mkPack A1 A2) pB) ;
+    (tLambda nAnon' (mkPack A1 A2) pB) ;
     pu ;
     pv
   ].
@@ -471,12 +473,12 @@ Definition mkCongPi1 (A1 A2 B1 B2 p1 p2 pA pB pp : term) :=
   tApp tCongPi1 [
     A1 ;
     A2 ;
-    (tLambda nAnon A1 B1) ;
-    (tLambda nAnon A2 B2) ;
+    (tLambda nAnon' A1 B1) ;
+    (tLambda nAnon' A2 B2) ;
     p1 ;
     p2 ;
     pA ;
-    (tLambda nAnon (mkPack A1 A2) pB) ;
+    (tLambda nAnon' (mkPack A1 A2) pB) ;
     pp
   ].
 
@@ -484,12 +486,12 @@ Definition mkCongPi2 (A1 A2 B1 B2 p1 p2 pA pB pp : term) :=
   tApp tCongPi2 [
     A1 ;
     A2 ;
-    (tLambda nAnon A1 B1) ;
-    (tLambda nAnon A2 B2) ;
+    (tLambda nAnon' A1 B1) ;
+    (tLambda nAnon' A2 B2) ;
     p1 ;
     p2 ;
     pA ;
-    (tLambda nAnon (mkPack A1 A2) pB) ;
+    (tLambda nAnon' (mkPack A1 A2) pB) ;
     pp
   ].
 

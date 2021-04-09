@@ -105,6 +105,11 @@ Fixpoint brs_repack (l : list (nat * tsl_result term)) :
 
 Close Scope s_scope.
 
+Definition rn (n : name) := mkBindAnn n Relevant.
+
+(* It's possible that matching on strings is a terrible idea
+  for efficiency, and it should be replaced by decidable equality.
+*)
 Fixpoint tsl_rec (fuel : nat) (Σ : global_env) (G : universes_graph) (Γ : context) (t : sterm)
          (axt : assoc term) {struct fuel}
   : tsl_result term :=
@@ -116,34 +121,34 @@ Fixpoint tsl_rec (fuel : nat) (Σ : global_env) (G : universes_graph) (Γ : cont
     | sSort s => ret (tSort (sort_to_universe s))
     | sProd n A B =>
       A' <- tsl_rec fuel Σ G Γ A axt ;;
-      B' <- tsl_rec fuel Σ G (Γ ,, vass n A') B axt ;;
-      ret (tProd n A' B')
+      B' <- tsl_rec fuel Σ G (Γ ,, vass (rn n) A') B axt ;;
+      ret (tProd (rn n) A' B')
     | sLambda n A B t =>
       A' <- tsl_rec fuel Σ G Γ A axt ;;
-      t' <- tsl_rec fuel Σ G (Γ ,, vass n A') t axt ;;
-      ret (tLambda n A' t')
+      t' <- tsl_rec fuel Σ G (Γ ,, vass (rn n) A') t axt ;;
+      ret (tLambda (rn n) A' t')
     | sApp u A B v =>
       u' <- tsl_rec fuel Σ G Γ u axt ;;
       v' <- tsl_rec fuel Σ G Γ v axt ;;
       myret Σ Γ (tApp u' [v'])
     | sSum n A B =>
       A' <- tsl_rec fuel Σ G Γ A axt ;;
-      B' <- tsl_rec fuel Σ G (Γ ,, vass n A') B axt ;;
+      B' <- tsl_rec fuel Σ G (Γ ,, vass (rn n) A') B axt ;;
       ret (mkSum A' B')
     | sPair A B u v =>
       A' <- tsl_rec fuel Σ G Γ A axt ;;
-      B' <- tsl_rec fuel Σ G (Γ ,, vass nAnon A') B axt ;;
+      B' <- tsl_rec fuel Σ G (Γ ,, vass nAnon' A') B axt ;;
       u' <- tsl_rec fuel Σ G Γ u axt ;;
       v' <- tsl_rec fuel Σ G Γ v axt ;;
       myret Σ Γ (mkPair A' B' u' v')
     | sPi1 A B p =>
       A' <- tsl_rec fuel Σ G Γ A axt ;;
-      B' <- tsl_rec fuel Σ G (Γ ,, vass nAnon A') B axt ;;
+      B' <- tsl_rec fuel Σ G (Γ ,, vass nAnon' A') B axt ;;
       p' <- tsl_rec fuel Σ G Γ p axt ;;
       myret Σ Γ (mkPi1 A' B' p')
     | sPi2 A B p =>
       A' <- tsl_rec fuel Σ G Γ A axt ;;
-      B' <- tsl_rec fuel Σ G (Γ ,, vass nAnon A') B axt ;;
+      B' <- tsl_rec fuel Σ G (Γ ,, vass nAnon' A') B axt ;;
       p' <- tsl_rec fuel Σ G Γ p axt ;;
       myret Σ Γ (mkPi2 A' B' p')
     | sEq A u v =>
@@ -158,7 +163,7 @@ Fixpoint tsl_rec (fuel : nat) (Σ : global_env) (G : universes_graph) (Γ : cont
     | sJ A u P w v p =>
       A' <- tsl_rec fuel Σ G Γ A axt ;;
       u' <- tsl_rec fuel Σ G Γ u axt ;;
-      P' <- tsl_rec fuel Σ G (Γ ,, vass nAnon A' ,, vass nAnon (mkEq (LiftSubst.lift0 1 A') (LiftSubst.lift0 1 u') (tRel 0))) P axt ;;
+      P' <- tsl_rec fuel Σ G (Γ ,, vass nAnon' A' ,, vass nAnon' (mkEq (LiftSubst.lift0 1 A') (LiftSubst.lift0 1 u') (tRel 0))) P axt ;;
       w' <- tsl_rec fuel Σ G Γ w axt ;;
       v' <- tsl_rec fuel Σ G Γ v axt ;;
       p' <- tsl_rec fuel Σ G Γ p axt ;;
@@ -183,7 +188,7 @@ Fixpoint tsl_rec (fuel : nat) (Σ : global_env) (G : universes_graph) (Γ : cont
     | sHeqToEq p =>
       p' <- tsl_rec fuel Σ G Γ p axt ;;
       match infer_hnf Σ G Γ p' with
-      | Checked (tApp (tInd (mkInd "Translation.Quotes.heq" 0) _) [ A' ; u' ; _ ; v' ]) =>
+      | Checked (tApp (tInd (mkInd (MPfile ["Quotes"; "Translation"], "heq")%core 0) _) [ A' ; u' ; _ ; v' ]) =>
         myret Σ Γ (mkHeqToHeq A' u' v' p')
       | Checked T => raise (UnexpectedTranslation "HeqToEq" p p' T)
       | TypeError t => raise (TypingError "HeqToEq" t)
@@ -195,7 +200,7 @@ Fixpoint tsl_rec (fuel : nat) (Σ : global_env) (G : universes_graph) (Γ : cont
     | sHeqSym p =>
       p' <- tsl_rec fuel Σ G Γ p axt ;;
       match infer_hnf Σ G Γ p' with
-      | Checked (tApp (tInd (mkInd "Translation.Quotes.heq" 0) _) [ A' ; a' ; B' ; b' ]) =>
+      | Checked (tApp (tInd (mkInd (MPfile ["Quotes"; "Translation"], "heq")%core 0) _) [ A' ; a' ; B' ; b' ]) =>
         myret Σ Γ (mkHeqSym A' a' B' b' p')
       | Checked T => raise (UnexpectedTranslation "HeqSym" p p' T)
       | TypeError t => raise (TypingError "HeqSym" t)
@@ -204,9 +209,9 @@ Fixpoint tsl_rec (fuel : nat) (Σ : global_env) (G : universes_graph) (Γ : cont
       p' <- tsl_rec fuel Σ G Γ p axt ;;
       q' <- tsl_rec fuel Σ G Γ q axt ;;
       match infer_hnf Σ G Γ p' with
-      | Checked (tApp (tInd (mkInd "Translation.Quotes.heq" 0) _) [ A' ; a' ; B' ; b' ]) =>
+      | Checked (tApp (tInd (mkInd (MPfile ["Quotes"; "Translation"], "heq")%core 0) _) [ A' ; a' ; B' ; b' ]) =>
         match infer_hnf Σ G Γ q' with
-        | Checked (tApp (tInd (mkInd "Translation.Quotes.heq" 0) _) [ _ ; _ ; C' ; c' ]) =>
+        | Checked (tApp (tInd (mkInd (MPfile ["Quotes"; "Translation"], "heq")%core 0) _) [ _ ; _ ; C' ; c' ]) =>
           myret Σ Γ (mkHeqTrans A' a' B' b' C' c' p' q')
         | Checked T => raise (UnexpectedTranslation "HeqTrans 1" q q' T)
         | TypeError t => raise (TypingError "HeqTrans 1" t)
@@ -218,7 +223,7 @@ Fixpoint tsl_rec (fuel : nat) (Σ : global_env) (G : universes_graph) (Γ : cont
       p' <- tsl_rec fuel Σ G Γ p axt ;;
       t' <- tsl_rec fuel Σ G Γ t axt ;;
       match infer_hnf Σ G Γ p' with
-      | Checked (tApp (tInd (mkInd "Coq.Init.Logic.eq" 0) _) [ _ ; A' ; B' ]) =>
+      | Checked (tApp (tInd (mkInd (MPfile ["Logic"; "Init"; "Coq"], "eq")%core 0) _) [ _ ; A' ; B' ]) =>
         myret Σ Γ (mkHeqTransport A' B' p' t')
       | Checked T => raise (UnexpectedTranslation "HeqTransport" p p' T)
       | TypeError t => raise (TypingError "HeqTransport" t)
@@ -226,10 +231,10 @@ Fixpoint tsl_rec (fuel : nat) (Σ : global_env) (G : universes_graph) (Γ : cont
     | sCongProd B1 B2 pA pB =>
       pA' <- tsl_rec fuel Σ G Γ pA axt ;;
       match infer_hnf Σ G Γ pA' with
-      | Checked (tApp (tInd (mkInd "Translation.Quotes.heq" 0) _) [ _ ; A1' ; _ ; A2' ]) =>
-        pB' <- tsl_rec fuel Σ G (Γ ,, vass nAnon (mkPack A1' A2')) pB axt ;;
-        B1' <- tsl_rec fuel Σ G (Γ ,, vass nAnon A1') B1 axt ;;
-        B2' <- tsl_rec fuel Σ G (Γ ,, vass nAnon A2') B2 axt ;;
+      | Checked (tApp (tInd (mkInd (MPfile ["Quotes"; "Translation"], "heq")%core 0) _) [ _ ; A1' ; _ ; A2' ]) =>
+        pB' <- tsl_rec fuel Σ G (Γ ,, vass nAnon' (mkPack A1' A2')) pB axt ;;
+        B1' <- tsl_rec fuel Σ G (Γ ,, vass nAnon' A1') B1 axt ;;
+        B2' <- tsl_rec fuel Σ G (Γ ,, vass nAnon' A2') B2 axt ;;
         myret Σ Γ (mkCongProd A1' A2' B1' B2' pA' pB')
       | Checked T => raise (UnexpectedTranslation "CongProd" pA pA' T)
       | TypeError t => raise (TypingError "CongProd" t)
@@ -237,13 +242,13 @@ Fixpoint tsl_rec (fuel : nat) (Σ : global_env) (G : universes_graph) (Γ : cont
     | sCongLambda B1 B2 t1 t2 pA pB pt =>
       pA' <- tsl_rec fuel Σ G Γ pA axt ;;
       match infer_hnf Σ G Γ pA' with
-      | Checked (tApp (tInd (mkInd "Translation.Quotes.heq" 0) _) [ _ ; A1' ; _ ; A2' ]) =>
-        pB' <- tsl_rec fuel Σ G (Γ ,, vass nAnon (mkPack A1' A2')) pB axt ;;
-        pt' <- tsl_rec fuel Σ G (Γ ,, vass nAnon (mkPack A1' A2')) pt axt ;;
-        B1' <- tsl_rec fuel Σ G (Γ ,, vass nAnon A1') B1 axt ;;
-        B2' <- tsl_rec fuel Σ G (Γ ,, vass nAnon A2') B2 axt ;;
-        t1' <- tsl_rec fuel Σ G (Γ ,, vass nAnon A1') t1 axt ;;
-        t2' <- tsl_rec fuel Σ G (Γ ,, vass nAnon A2') t2 axt ;;
+      | Checked (tApp (tInd (mkInd (MPfile ["Quotes"; "Translation"], "heq")%core 0) _) [ _ ; A1' ; _ ; A2' ]) =>
+        pB' <- tsl_rec fuel Σ G (Γ ,, vass nAnon' (mkPack A1' A2')) pB axt ;;
+        pt' <- tsl_rec fuel Σ G (Γ ,, vass nAnon' (mkPack A1' A2')) pt axt ;;
+        B1' <- tsl_rec fuel Σ G (Γ ,, vass nAnon' A1') B1 axt ;;
+        B2' <- tsl_rec fuel Σ G (Γ ,, vass nAnon' A2') B2 axt ;;
+        t1' <- tsl_rec fuel Σ G (Γ ,, vass nAnon' A1') t1 axt ;;
+        t2' <- tsl_rec fuel Σ G (Γ ,, vass nAnon' A2') t2 axt ;;
         myret Σ Γ (mkCongLambda A1' A2' B1' B2' t1' t2' pA' pB' pt')
       | Checked T => raise (UnexpectedTranslation "CongLambda" pA pA' T)
       | TypeError t => raise (TypingError "CongLambda" t)
@@ -251,16 +256,16 @@ Fixpoint tsl_rec (fuel : nat) (Σ : global_env) (G : universes_graph) (Γ : cont
     | sCongApp B1 B2 pt pA pB pu =>
       pA' <- tsl_rec fuel Σ G Γ pA axt ;;
       match infer_hnf Σ G Γ pA' with
-      | Checked (tApp (tInd (mkInd "Translation.Quotes.heq" 0) _) [ _ ; A1' ; _ ; A2' ]) =>
-        pB' <- tsl_rec fuel Σ G (Γ ,, vass nAnon (mkPack A1' A2')) pB axt ;;
+      | Checked (tApp (tInd (mkInd (MPfile ["Quotes"; "Translation"], "heq")%core 0) _) [ _ ; A1' ; _ ; A2' ]) =>
+        pB' <- tsl_rec fuel Σ G (Γ ,, vass nAnon' (mkPack A1' A2')) pB axt ;;
         pt' <- tsl_rec fuel Σ G Γ pt axt ;;
         pu' <- tsl_rec fuel Σ G Γ pu axt ;;
-        B1' <- tsl_rec fuel Σ G (Γ ,, vass nAnon A1') B1 axt ;;
-        B2' <- tsl_rec fuel Σ G (Γ ,, vass nAnon A2') B2 axt ;;
+        B1' <- tsl_rec fuel Σ G (Γ ,, vass nAnon' A1') B1 axt ;;
+        B2' <- tsl_rec fuel Σ G (Γ ,, vass nAnon' A2') B2 axt ;;
         match infer_hnf Σ G Γ pt' with
-        | Checked (tApp (tInd (mkInd "Translation.Quotes.heq" 0) _) [ _ ; t1' ; _ ; t2' ]) =>
+        | Checked (tApp (tInd (mkInd (MPfile ["Quotes"; "Translation"], "heq")%core 0) _) [ _ ; t1' ; _ ; t2' ]) =>
           match infer_hnf Σ G Γ pu' with
-          | Checked (tApp (tInd (mkInd "Translation.Quotes.heq" 0) _) [ _ ; u1' ; _ ; u2' ]) =>
+          | Checked (tApp (tInd (mkInd (MPfile ["Quotes"; "Translation"], "heq")%core 0) _) [ _ ; u1' ; _ ; u2' ]) =>
             myret Σ Γ (mkCongApp A1' A2' B1' B2' t1' t2' u1' u2' pA' pB' pt' pu')
           | Checked T => raise (UnexpectedTranslation "CongApp 1" pu pu' T)
           | TypeError t => raise (TypingError "CongApp 1" t)
@@ -274,10 +279,10 @@ Fixpoint tsl_rec (fuel : nat) (Σ : global_env) (G : universes_graph) (Γ : cont
     | sCongSum B1 B2 pA pB =>
       pA' <- tsl_rec fuel Σ G Γ pA axt ;;
       match infer_hnf Σ G Γ pA' with
-      | Checked (tApp (tInd (mkInd "Translation.Quotes.heq" 0) _) [ _ ; A1' ; _ ; A2' ]) =>
-        pB' <- tsl_rec fuel Σ G (Γ ,, vass nAnon (mkPack A1' A2')) pB axt ;;
-        B1' <- tsl_rec fuel Σ G (Γ ,, vass nAnon A1') B1 axt ;;
-        B2' <- tsl_rec fuel Σ G (Γ ,, vass nAnon A2') B2 axt ;;
+      | Checked (tApp (tInd (mkInd (MPfile ["Quotes"; "Translation"], "heq")%core 0) _) [ _ ; A1' ; _ ; A2' ]) =>
+        pB' <- tsl_rec fuel Σ G (Γ ,, vass nAnon' (mkPack A1' A2')) pB axt ;;
+        B1' <- tsl_rec fuel Σ G (Γ ,, vass nAnon' A1') B1 axt ;;
+        B2' <- tsl_rec fuel Σ G (Γ ,, vass nAnon' A2') B2 axt ;;
         myret Σ Γ (mkCongSum A1' A2' B1' B2' pA' pB')
       | Checked T => raise (UnexpectedTranslation "CongSum" pA pA' T)
       | TypeError t => raise (TypingError "CongSum" t)
@@ -285,16 +290,16 @@ Fixpoint tsl_rec (fuel : nat) (Σ : global_env) (G : universes_graph) (Γ : cont
     | sCongPair B1 B2 pA pB pu pv =>
       pA' <- tsl_rec fuel Σ G Γ pA axt ;;
       match infer_hnf Σ G Γ pA' with
-      | Checked (tApp (tInd (mkInd "Translation.Quotes.heq" 0) _) [ _ ; A1' ; _ ; A2' ]) =>
-        pB' <- tsl_rec fuel Σ G (Γ ,, vass nAnon (mkPack A1' A2')) pB axt ;;
-        B1' <- tsl_rec fuel Σ G (Γ ,, vass nAnon A1') B1 axt ;;
-        B2' <- tsl_rec fuel Σ G (Γ ,, vass nAnon A2') B2 axt ;;
+      | Checked (tApp (tInd (mkInd (MPfile ["Quotes"; "Translation"], "heq")%core 0) _) [ _ ; A1' ; _ ; A2' ]) =>
+        pB' <- tsl_rec fuel Σ G (Γ ,, vass nAnon' (mkPack A1' A2')) pB axt ;;
+        B1' <- tsl_rec fuel Σ G (Γ ,, vass nAnon' A1') B1 axt ;;
+        B2' <- tsl_rec fuel Σ G (Γ ,, vass nAnon' A2') B2 axt ;;
         pu' <- tsl_rec fuel Σ G Γ pu axt ;;
         pv' <- tsl_rec fuel Σ G Γ pv axt ;;
         match infer_hnf Σ G Γ pu' with
-        | Checked (tApp (tInd (mkInd "Translation.Quotes.heq" 0) _) [ _ ; u1' ; _ ; u2' ]) =>
+        | Checked (tApp (tInd (mkInd (MPfile ["Quotes"; "Translation"], "heq")%core 0) _) [ _ ; u1' ; _ ; u2' ]) =>
           match infer_hnf Σ G Γ pv' with
-          | Checked (tApp (tInd (mkInd "Translation.Quotes.heq" 0) _) [ _ ; v1' ; _ ; v2' ]) =>
+          | Checked (tApp (tInd (mkInd (MPfile ["Quotes"; "Translation"], "heq")%core 0) _) [ _ ; v1' ; _ ; v2' ]) =>
             myret Σ Γ (mkCongPair A1' A2' B1' B2' u1' u2' v1' v2' pA' pB' pu' pv')
           | Checked T => raise (UnexpectedTranslation "CongPair 1" pv pv' T)
           | TypeError t => raise (TypingError "CongPair 1" t)
@@ -308,13 +313,13 @@ Fixpoint tsl_rec (fuel : nat) (Σ : global_env) (G : universes_graph) (Γ : cont
     | sCongPi1 B1 B2 pA pB pp =>
       pA' <- tsl_rec fuel Σ G Γ pA axt ;;
       match infer_hnf Σ G Γ pA' with
-      | Checked (tApp (tInd (mkInd "Translation.Quotes.heq" 0) _) [ _ ; A1' ; _ ; A2' ]) =>
-        pB' <- tsl_rec fuel Σ G (Γ ,, vass nAnon (mkPack A1' A2')) pB axt ;;
-        B1' <- tsl_rec fuel Σ G (Γ ,, vass nAnon A1') B1 axt ;;
-        B2' <- tsl_rec fuel Σ G (Γ ,, vass nAnon A2') B2 axt ;;
+      | Checked (tApp (tInd (mkInd (MPfile ["Quotes"; "Translation"], "heq")%core 0) _) [ _ ; A1' ; _ ; A2' ]) =>
+        pB' <- tsl_rec fuel Σ G (Γ ,, vass nAnon' (mkPack A1' A2')) pB axt ;;
+        B1' <- tsl_rec fuel Σ G (Γ ,, vass nAnon' A1') B1 axt ;;
+        B2' <- tsl_rec fuel Σ G (Γ ,, vass nAnon' A2') B2 axt ;;
         pp' <- tsl_rec fuel Σ G Γ pp axt ;;
         match infer_hnf Σ G Γ pp' with
-        | Checked (tApp (tInd (mkInd "Translation.Quotes.heq" 0) _) [ _ ; p1' ; _ ; p2' ]) =>
+        | Checked (tApp (tInd (mkInd (MPfile ["Quotes"; "Translation"], "heq")%core 0) _) [ _ ; p1' ; _ ; p2' ]) =>
           myret Σ Γ (mkCongPi1 A1' A2' B1' B2' p1' p2' pA' pB' pp')
         | Checked T => raise (UnexpectedTranslation "CongPi1 1" pp pp' T)
         | TypeError t => raise (TypingError "CongPi1 1" t)
@@ -325,13 +330,13 @@ Fixpoint tsl_rec (fuel : nat) (Σ : global_env) (G : universes_graph) (Γ : cont
     | sCongPi2 B1 B2 pA pB pp =>
       pA' <- tsl_rec fuel Σ G Γ pA axt ;;
       match infer_hnf Σ G Γ pA' with
-      | Checked (tApp (tInd (mkInd "Translation.Quotes.heq" 0) _) [ _ ; A1' ; _ ; A2' ]) =>
-        pB' <- tsl_rec fuel Σ G (Γ ,, vass nAnon (mkPack A1' A2')) pB axt ;;
-        B1' <- tsl_rec fuel Σ G (Γ ,, vass nAnon A1') B1 axt ;;
-        B2' <- tsl_rec fuel Σ G (Γ ,, vass nAnon A2') B2 axt ;;
+      | Checked (tApp (tInd (mkInd (MPfile ["Quotes"; "Translation"], "heq")%core 0) _) [ _ ; A1' ; _ ; A2' ]) =>
+        pB' <- tsl_rec fuel Σ G (Γ ,, vass nAnon' (mkPack A1' A2')) pB axt ;;
+        B1' <- tsl_rec fuel Σ G (Γ ,, vass nAnon' A1') B1 axt ;;
+        B2' <- tsl_rec fuel Σ G (Γ ,, vass nAnon' A2') B2 axt ;;
         pp' <- tsl_rec fuel Σ G Γ pp axt ;;
         match infer_hnf Σ G Γ pp' with
-        | Checked (tApp (tInd (mkInd "Translation.Quotes.heq" 0) _) [ _ ; p1' ; _ ; p2' ]) =>
+        | Checked (tApp (tInd (mkInd (MPfile ["Quotes"; "Translation"], "heq")%core 0) _) [ _ ; p1' ; _ ; p2' ]) =>
           myret Σ Γ (mkCongPi2 A1' A2' B1' B2' p1' p2' pA' pB' pp')
         | Checked T => raise (UnexpectedTranslation "CongPi2 1" pp pp' T)
         | TypeError t => raise (TypingError "CongPi2 1" t)
@@ -344,9 +349,9 @@ Fixpoint tsl_rec (fuel : nat) (Σ : global_env) (G : universes_graph) (Γ : cont
       pu' <- tsl_rec fuel Σ G Γ pu axt ;;
       pv' <- tsl_rec fuel Σ G Γ pv axt ;;
       match infer_hnf Σ G Γ pu' with
-      | Checked (tApp (tInd (mkInd "Translation.Quotes.heq" 0) _) [ A1' ; u1' ; A2' ; u2' ]) =>
+      | Checked (tApp (tInd (mkInd (MPfile ["Quotes"; "Translation"], "heq")%core 0) _) [ A1' ; u1' ; A2' ; u2' ]) =>
         match infer_hnf Σ G Γ pv' with
-        | Checked (tApp (tInd (mkInd "Translation.Quotes.heq" 0) _) [ _ ; v1' ; _ ; v2' ]) =>
+        | Checked (tApp (tInd (mkInd (MPfile ["Quotes"; "Translation"], "heq")%core 0) _) [ _ ; v1' ; _ ; v2' ]) =>
           myret Σ Γ (mkCongEq A1' A2' u1' v1' u2' v2' pA' pu' pv')
         | Checked T => raise (UnexpectedTranslation "CongEq 1" pv pv' T)
         | TypeError t => raise (TypingError "CongEq 1" t)
@@ -358,7 +363,7 @@ Fixpoint tsl_rec (fuel : nat) (Σ : global_env) (G : universes_graph) (Γ : cont
       pA' <- tsl_rec fuel Σ G Γ pA axt ;;
       pu' <- tsl_rec fuel Σ G Γ pu axt ;;
       match infer_hnf Σ G Γ pu' with
-      | Checked (tApp (tInd (mkInd "Translation.Quotes.heq" 0) _) [ A1' ; u1' ; A2' ; u2' ]) =>
+      | Checked (tApp (tInd (mkInd (MPfile ["Quotes"; "Translation"], "heq")%core 0) _) [ A1' ; u1' ; A2' ; u2' ]) =>
         myret Σ Γ (mkCongRefl A1' A2' u1' u2' pA' pu')
       | Checked T => raise (UnexpectedTranslation "CongRefl" pu pu' T)
       | TypeError t => raise (TypingError "CongRefl" t)
@@ -366,7 +371,7 @@ Fixpoint tsl_rec (fuel : nat) (Σ : global_env) (G : universes_graph) (Γ : cont
     | sEqToHeq p =>
       p' <- tsl_rec fuel Σ G Γ p axt ;;
       match infer_hnf Σ G Γ p' with
-      | Checked (tApp (tInd (mkInd "Coq.Init.Logic.eq" 0) _) [ A' ; u' ; v' ]) =>
+      | Checked (tApp (tInd (mkInd (MPfile ["Logic"; "Init"; "Coq"], "eq")%core 0) _) [ A' ; u' ; v' ]) =>
         myret Σ Γ (mkEqToHeq A' u' v' p')
       | Checked T => raise (UnexpectedTranslation "EqToHeq" p p' T)
       | TypeError t => raise (TypingError "EqToHeq" t)
@@ -376,7 +381,7 @@ Fixpoint tsl_rec (fuel : nat) (Σ : global_env) (G : universes_graph) (Γ : cont
       B' <- tsl_rec fuel Σ G Γ B axt ;;
       p' <- tsl_rec fuel Σ G Γ p axt ;;
       match infer_hnf Σ G Γ p' with
-      | Checked (tApp (tInd (mkInd "Translation.Quotes.heq" 0) _) [ _ ; u' ; _ ; v' ]) =>
+      | Checked (tApp (tInd (mkInd (MPfile ["Quotes"; "Translation"], "heq")%core 0) _) [ _ ; u' ; _ ; v' ]) =>
         myret Σ Γ (mkHeqTypeEq A' u' B' v' p')
       | Checked T => raise (UnexpectedTranslation "HeqTypeEq" p p' T)
       | TypeError t => raise (TypingError "HeqTypeEq" t)
@@ -388,7 +393,7 @@ Fixpoint tsl_rec (fuel : nat) (Σ : global_env) (G : universes_graph) (Γ : cont
     | sProjT1 p =>
       p' <- tsl_rec fuel Σ G Γ p axt ;;
       match infer_hnf Σ G Γ p' with
-      | Checked (tApp (tInd (mkInd "Translation.Quotes.Pack" 0) _) [ A1' ; A2' ]) =>
+      | Checked (tApp (tInd (mkInd (MPfile ["Quotes"; "Translation"], "Pack")%core 0) _) [ A1' ; A2' ]) =>
         myret Σ Γ (mkProjT1 A1' A2' p')
       | Checked T => raise (UnexpectedTranslation "ProjT1" p p' T)
       | TypeError t => raise (TypingError "ProjT1" t)
@@ -396,7 +401,7 @@ Fixpoint tsl_rec (fuel : nat) (Σ : global_env) (G : universes_graph) (Γ : cont
     | sProjT2 p =>
       p' <- tsl_rec fuel Σ G Γ p axt ;;
       match infer_hnf Σ G Γ p' with
-      | Checked (tApp (tInd (mkInd "Translation.Quotes.Pack" 0) _) [ A1' ; A2' ]) =>
+      | Checked (tApp (tInd (mkInd (MPfile ["Quotes"; "Translation"], "Pack")%core 0) _) [ A1' ; A2' ]) =>
         myret Σ Γ (mkProjT2 A1' A2' p')
       | Checked T => raise (UnexpectedTranslation "ProjT2" p p' T)
       | TypeError t => raise (TypingError "ProjT2" t)
@@ -404,7 +409,7 @@ Fixpoint tsl_rec (fuel : nat) (Σ : global_env) (G : universes_graph) (Γ : cont
     | sProjTe p =>
       p' <- tsl_rec fuel Σ G Γ p axt ;;
       match infer_hnf Σ G Γ p' with
-      | Checked (tApp (tInd (mkInd "Translation.Quotes.Pack" 0) _) [ A1' ; A2' ]) =>
+      | Checked (tApp (tInd (mkInd (MPfile ["Quotes"; "Translation"], "Pack")%core 0) _) [ A1' ; A2' ]) =>
         myret Σ Γ (mkProjTe A1' A2' p')
       | Checked T => raise (UnexpectedTranslation "ProjTe" p p' T)
       | TypeError t => raise (TypingError "ProjTe" t)
@@ -427,7 +432,7 @@ Fixpoint tsl_ctx (fuel : nat) (Σ : global_env) (G : universes_graph)
   | a :: Γ =>
     Γ' <- tsl_ctx fuel Σ G Γ axt ;;
     A' <- tsl_rec fuel Σ G Γ' a axt ;;
-    ret (Γ' ,, vass nAnon A')
+    ret (Γ' ,, vass nAnon' A')
   end.
 
 End Final.

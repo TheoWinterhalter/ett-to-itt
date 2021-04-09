@@ -119,10 +119,15 @@ vec_rect A
 ### Requirements
 
 This project can be compiled with Coq 8.11 and requires
-[Equations](http://mattam82.github.io/Coq-Equations/)
+[Equations](http://mattam82.github.io/Coq-Equations/) 1.2.4
 and
-[MetaCoq](https://github.com/MetaCoq/metacoq).
+[MetaCoq](https://github.com/MetaCoq/metacoq) 1.0 beta2.
 These can be installed via opam.
+```fish
+opam repo add coq-released https://coq.inria.fr/opam/released
+opam update
+opam install coq.8.11.2 coq-equations.1.2.4+8.11 coq-metacoq.1.0~beta2+8.11
+```
 
 ### Building
 

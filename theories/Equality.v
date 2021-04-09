@@ -112,17 +112,70 @@ Section nldec.
 
   Ltac nl_dec_tac nl_dec :=
     repeat match goal with
-           | t : nlterm, u : nlterm |- _ => fcase (nl_dec t u)
-           | s : sort, z : sort |- _ => fcase (Sorts.eq_dec s z)
-           | n : nat, m : nat |- _ => fcase (Nat.eq_dec n m)
-           | i : ident, i' : ident |- _ => fcase (string_dec i i')
-           end.
+    | t : nlterm, u : nlterm |- _ => fcase (nl_dec t u)
+    | s : sort, z : sort |- _ => fcase (Sorts.eq_dec s z)
+    | n : nat, m : nat |- _ => fcase (Nat.eq_dec n m)
+    | i : ident, i' : ident |- _ => fcase (string_dec i i')
+    end.
 
   Fixpoint nl_dec (t u : nlterm) : { t = u } + { t <> u }.
   Proof.
     destruct t ; destruct u ; try (right ; discriminate).
     all: nl_dec_tac nl_dec.
   Defined.
+
+  Definition eq_name (u v : name) : bool :=
+    match u, v with
+    | nAnon, nAnon => true
+    | nNamed i, nNamed j => eq_string i j
+    | _, _ => false
+    end.
+
+  Lemma eq_string_spec :
+    forall x y, reflect (x = y) (eq_string x y).
+  Proof.
+    intros x y. unfold eq_string.
+    destruct string_compare eqn:e.
+    - apply string_compare_eq in e. constructor. auto.
+    - right. intro n. eapply string_compare_eq in n.
+      rewrite n in e. discriminate.
+    - right. intro n. eapply string_compare_eq in n.
+      rewrite n in e. discriminate.
+  Qed.
+
+  Lemma eq_name_spec :
+    forall u v, reflect (u = v) (eq_name u v).
+  Proof.
+    intros u v. destruct u, v. all: simpl.
+    - constructor. reflexivity.
+    - right. discriminate.
+    - right. discriminate.
+    - destruct (eq_string_spec i i0).
+      + left. subst. reflexivity.
+      + right. intro. eapply n. inversion H. auto.
+  Qed.
+
+  Definition eq_name_dec (u v : name) : { u = v } + { u <> v }.
+  Proof.
+    destruct (eq_name_spec u v).
+    - left. auto.
+    - right. auto.
+  Qed.
+
+  Ltac sterm_dec_tac sterm_dec :=
+    repeat match goal with
+    | t : sterm, u : sterm |- _ => fcase (sterm_dec t u)
+    | s : sort, z : sort |- _ => fcase (Sorts.eq_dec s z)
+    | n : nat, m : nat |- _ => fcase (Nat.eq_dec n m)
+    | i : ident, i' : ident |- _ => fcase (string_dec i i')
+    | n : name, n' : name |- _ => fcase (eq_name_dec n n')
+    end.
+
+  Fixpoint sterm_dec (t u : sterm) : { t = u } + { t <> u }.
+  Proof.
+    destruct t ; destruct u ; try (right ; discriminate).
+    all: sterm_dec_tac sterm_dec.
+  Qed.
 
 End nldec.
 

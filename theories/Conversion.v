@@ -8,6 +8,8 @@ Import ListNotations.
 
 Open Scope s_scope.
 
+Set Equations With UIP.
+
 (*! Reduction. *)
 
 Section Red1.
@@ -493,7 +495,6 @@ End Red.
 
 Notation " t ▷⃰ u " :=
   (red t u) (at level 50, u at next level).
-
 
 Section nlred.
 
@@ -1205,9 +1206,17 @@ Ltac invconv h :=
     cbn in * ; inversion_eq ;
     repeat split ; apply conv_eq ; assumption
   | dependent destruction H ;
+    match goal with
+    | IHh : _ |- _ =>
+      specialize IHh with (1 := eq_refl)
+    end ;
     split_hyps ; repeat split ; try assumption ;
     eapply conv_red_l ; eassumption
   | dependent destruction H ;
+    match goal with
+    | IHh : _ |- _ =>
+      specialize IHh with (1 := eq_refl)
+    end ;
     split_hyps ; repeat split ; try assumption ;
     eapply conv_red_r ; eassumption
   ].
@@ -1215,6 +1224,12 @@ Ltac invconv h :=
 Section Inversions.
 
 Context `{Sort_notion : Sorts.notion}.
+
+Instance sterm_EqDec : EqDec sterm.
+Proof.
+  intros x y.
+  eapply sterm_dec.
+Qed.
 
 Lemma heq_conv_inv :
   forall {A a B b A' a' B' b'},
