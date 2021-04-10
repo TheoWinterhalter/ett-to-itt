@@ -7,8 +7,10 @@
 - [Installing](#installing)
 - [Structure](#structure-of-the-project)
 
-A translation to weak type theory instead of ITT can be found in the
-[weak branch](https://github.com/TheoWinterhalter/ett-to-itt/tree/weak).
+A translation to weak type theory instead of ITT can be found in
+[ett-to-wtt].
+
+[ett-to-wtt]: https://github.com/TheoWinterhalter/ett-to-wtt
 
 ## Overview
 
